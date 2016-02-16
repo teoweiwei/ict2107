@@ -28,9 +28,10 @@ public class Group3 extends JFrame {
 
 	MulticastSocket multicastSocketCommon = null;
 	InetAddress multicastGroupCommon = null;
-	String ipAddressCommon = "228.1.1.1";
-	String ipAddress = "228.1.1.";
+	String ipAddressCommon = "235.1.1.1";
+	String ipAddress = "235.1.1.";
 	String room="";
+	String userList="ListOfNames:";
 	int port = 6789;
 	String name = "";
 	
@@ -83,8 +84,8 @@ public class Group3 extends JFrame {
 
 							//Assumed we received string
 							String msg = new String(receivedData, 0, length);
-							room += msg;
-							//System.out.println(room);
+							userList += msg;
+							System.out.println(userList);
 						}catch(IOException ex){
 							ex.printStackTrace();
 						}
@@ -131,15 +132,25 @@ public class Group3 extends JFrame {
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
-				try{
-					String msg = txtUserName.getText();
-					msg =  name + "change name to " + msg;
-					byte[] buf = msg.getBytes();
-					DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastGroup, port);
-					multicastSocket.send(dgpSend);
-				}catch(IOException ex){
-					ex.printStackTrace();
+				
+				if(userList.contains(txtUserName.getText()))
+				{
+					System.out.println("Name already exists.Please select new name");
 				}
+				else
+				{
+					try{
+						//Send a joined message
+						String message = txtUserName.getText() + ",";
+						byte[] buf = message.getBytes();
+						DatagramPacket dgpConnected = new DatagramPacket(buf, buf.length, multicastGroupCommon, port);
+						multicastSocketCommon.send(dgpConnected);
+					}catch(IOException ex){
+						ex.printStackTrace();
+					}
+				}
+			
+
 			}
 		});
 		btnRegister.setBounds(356, 8, 120, 26);
