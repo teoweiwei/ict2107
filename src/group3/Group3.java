@@ -89,9 +89,9 @@ public class Group3 extends JFrame {
 		btnAddGroup.setBounds(356, 100, 120, 26);
 		getContentPane().add(btnAddGroup);
 		
-		JButton btnDeleteGroup = new JButton("Delete");
-		btnDeleteGroup.setBounds(484, 100, 120, 26);
-		getContentPane().add(btnDeleteGroup);
+		JButton btnEditGroup = new JButton("Edit");
+		btnEditGroup.setBounds(484, 100, 120, 26);
+		getContentPane().add(btnEditGroup);
 
 		JLabel lblFriendList = new JLabel("Friend List");
 		lblFriendList.setBounds(8, 150, 166, 26);
@@ -129,7 +129,7 @@ public class Group3 extends JFrame {
 		spMessage.setBounds(356, 184, 376, 300);
 		getContentPane().add(spMessage);
 		
-		JLabel lblMessge = new JLabel("Messge");
+		JLabel lblMessge = new JLabel("Message");
 		lblMessge.setBounds(8, 508, 100, 26);
 		getContentPane().add(lblMessge);
 
