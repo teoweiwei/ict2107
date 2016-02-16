@@ -13,8 +13,27 @@ import javax.swing.JTextPane;
 import javax.swing.JTextArea;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.awt.event.ActionEvent;
 
 public class Group3 extends JFrame {
+	
+	
+	MulticastSocket multicastSocket = null;
+	InetAddress multicastGroup = null;
+
+	MulticastSocket multicastSocketCommon = null;
+	InetAddress multicastGroupCommon = null;
+	String ipAddressCommon = "228.1.1.1";
+	String ipAddress = "228.1.1.";
+	String room="";
+	int port = 6789;
+	String name = "";
+	
 	private JTextField txtUserName;
 	private JTextField txtFriend;
 	private JTextField txtGroup;
@@ -40,7 +59,42 @@ public class Group3 extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public Group3() {
+	public Group3()
+	{
+		
+		try{
+			multicastGroupCommon = InetAddress.getByName(ipAddressCommon);
+			multicastSocketCommon = new MulticastSocket(port);
+
+			//Join
+			multicastSocketCommon.joinGroup(multicastGroupCommon);
+
+			//Create a new thread to keep listening for packets from the group
+			new Thread(new Runnable() {
+				@Override
+				public void run(){
+					byte buf1[] = new byte[1000];
+					DatagramPacket dgpReceived = new DatagramPacket(buf1, buf1.length);
+					while(true){
+						try{
+							multicastSocketCommon.receive(dgpReceived);
+							byte[] receivedData = dgpReceived.getData();
+							int length = dgpReceived.getLength();
+
+							//Assumed we received string
+							String msg = new String(receivedData, 0, length);
+							room += msg;
+							//System.out.println(room);
+						}catch(IOException ex){
+							ex.printStackTrace();
+						}
+					}
+				}
+			}).start();
+
+		}catch(IOException ex){
+			ex.printStackTrace();
+		}
 		setTitle("ICT2107 Project 1 - Group 3");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 760, 610);
@@ -74,6 +128,20 @@ public class Group3 extends JFrame {
 		//txtGroup.setColumns(10);
 		
 		JButton btnRegister = new JButton("Register");
+		btnRegister.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				try{
+					String msg = txtUserName.getText();
+					msg =  name + "change name to " + msg;
+					byte[] buf = msg.getBytes();
+					DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastGroup, port);
+					multicastSocket.send(dgpSend);
+				}catch(IOException ex){
+					ex.printStackTrace();
+				}
+			}
+		});
 		btnRegister.setBounds(356, 8, 120, 26);
 		getContentPane().add(btnRegister);
 		
