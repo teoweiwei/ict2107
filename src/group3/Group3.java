@@ -15,25 +15,45 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.awt.event.ActionEvent;
 
 public class Group3 extends JFrame {
+	private static String BROADCAST_ADDRESS = "235.1.1.1";
+	private static int PORT = 6789;
 	
+	MulticastSocket multicastBroadcastSocket = null;
+	InetAddress multicastBroadcastGroup = null;
 	
-	MulticastSocket multicastSocket = null;
+	MulticastSocket multicastChatSocket = null;
+	InetAddress multicastChatGroup = null;
+	
+	String registeredName = "";
+	String processID = ManagementFactory.getRuntimeMXBean().getName();
+	
+	ArrayList<String> registeredUser = new ArrayList();
+	ArrayList<String> friendList = new ArrayList();
+	
+	//Tentatively to be a 2D ArrayList [[groupName1, Grp1 friend1, Grp1 friend2], [groupName2, Grp2 friend1, Grp2 friend2]]
+	ArrayList<String> GroupList = new ArrayList();	
+	
+	boolean broadcastConnect = false;
+	
+	/*MulticastSocket multicastSocket = null;
 	InetAddress multicastGroup = null;
 
 	MulticastSocket multicastSocketCommon = null;
 	InetAddress multicastGroupCommon = null;
-	String ipAddressCommon = "235.1.1.1";
-	String ipAddress = "235.1.1.";
+	String ipAddressCommon = "228.1.1.1";
+	String ipAddress = "228.1.1.";
 	String room="";
-	String userList="ListOfNames:";
 	int port = 6789;
-	String name = "";
+	String name = "";*/
 	
 	private JTextField txtUserName;
 	private JTextField txtFriend;
@@ -61,9 +81,8 @@ public class Group3 extends JFrame {
 	 * Create the frame.
 	 */
 	public Group3()
-	{
-		
-		try{
+	{		
+/*		try{
 			multicastGroupCommon = InetAddress.getByName(ipAddressCommon);
 			multicastSocketCommon = new MulticastSocket(port);
 
@@ -84,8 +103,8 @@ public class Group3 extends JFrame {
 
 							//Assumed we received string
 							String msg = new String(receivedData, 0, length);
-							userList += msg;
-							System.out.println(userList);
+							room += msg;
+							//System.out.println(room);
 						}catch(IOException ex){
 							ex.printStackTrace();
 						}
@@ -95,7 +114,7 @@ public class Group3 extends JFrame {
 
 		}catch(IOException ex){
 			ex.printStackTrace();
-		}
+		}*/
 		setTitle("ICT2107 Project 1 - Group 3");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 760, 610);
@@ -132,25 +151,115 @@ public class Group3 extends JFrame {
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
+				/*try{
+					String msg = txtUserName.getText();
+					msg =  name + "change name to " + msg;
+					byte[] buf = msg.getBytes();
+					DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastGroup, port);
+					multicastSocket.send(dgpSend);
+				}catch(IOException ex){
+					ex.printStackTrace();
+				}*/
 				
-				if(userList.contains(txtUserName.getText()))
+				String tentativeName = txtUserName.getText();
+				
+				if(registeredUser.contains(tentativeName))
 				{
-					System.out.println("Name already exists.Please select new name");
+					System.out.println(tentativeName + " already taken!");
 				}
 				else
 				{
 					try{
-						//Send a joined message
-						String message = txtUserName.getText() + ",";
-						byte[] buf = message.getBytes();
-						DatagramPacket dgpConnected = new DatagramPacket(buf, buf.length, multicastGroupCommon, port);
-						multicastSocketCommon.send(dgpConnected);
+						if(!broadcastConnect)
+						{
+							multicastBroadcastGroup = InetAddress.getByName(BROADCAST_ADDRESS);
+							multicastBroadcastSocket = new MulticastSocket(PORT);
+							multicastBroadcastSocket.joinGroup(multicastBroadcastGroup);
+							broadcastConnect = true;
+						}
+						
+						String userName = "CheckRegisterName|" + tentativeName;
+						byte[] sendBuf = userName.getBytes();
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, 6789);
+						multicastBroadcastSocket.send(dgpSend);
+						
+						byte receiveBuf[] = new byte[1000];
+						DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
+						multicastBroadcastSocket.receive(dgpReceived); // discard own broadcast message
+						
+						System.out.println("Before Try");
+						multicastBroadcastSocket.setSoTimeout(3000);	//3 seconds timeout
+						try {
+							multicastBroadcastSocket.receive(dgpReceived);
+							multicastBroadcastSocket.setSoTimeout(0); //Disable time out
+							System.out.println("received");
+							
+							byte[] receivedData = dgpReceived.getData();
+							int length = dgpReceived.getLength();
+							
+							String receivedMessage = new String(receivedData, 0, length);
+							
+							if(receivedMessage.equals("NameTaken"))
+							{
+								System.out.println(tentativeName + " already taken!");
+								txtUserName.setText("The name " + tentativeName + " is already taken!");
+							}
+							
+					    } catch (SocketTimeoutException ex) {
+					    	registeredName = tentativeName;
+					    	System.out.println(registeredName + " you are registered!");
+					    	
+					    	multicastBroadcastSocket.setSoTimeout(0); //Disable time out
+					    	
+					    	new Thread(new Runnable(){
+								@Override
+								public void run(){
+									byte receiveBuf[] = new byte[1000];
+									DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
+									
+									while(true){
+										try{
+									    	System.out.println("listening..");											
+											multicastBroadcastSocket.receive(dgpReceived);
+											byte[] receivedData = dgpReceived.getData();
+											int length = dgpReceived.getLength();
+											
+											String message = new String(receivedData, 0, length);
+											System.out.println("Received broadcast message: " + message);
+																	
+											String action = message.substring(0, message.indexOf("|"));
+											
+											message = message.substring(message.indexOf("|")+1, message.length());
+											System.out.println("Sub: " + message);
+											
+											if(action.equals("CheckRegisterName"))
+											{
+												if(message.equals(registeredName))
+												{
+													String sendMessage = "NameTaken";
+													byte[] sendBuf = sendMessage.getBytes();
+													DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+													multicastBroadcastSocket.send(dgpSend);
+													System.out.println(sendMessage);
+												}
+												else
+												{
+													registeredUser.add(message);
+												}
+											}
+											
+										}catch(IOException ex){
+											ex.printStackTrace();
+										}
+									}
+								}
+							}).start();
+					    }
+						
 					}catch(IOException ex){
 						ex.printStackTrace();
 					}
 				}
-			
-
 			}
 		});
 		btnRegister.setBounds(356, 8, 120, 26);
@@ -221,5 +330,33 @@ public class Group3 extends JFrame {
 		getContentPane().add(btnSend);
 		
 		
+	}
+	
+	public void DoAction(String message)
+	{
+		String action = message.substring(0, message.indexOf("|"));
+		
+		message = message.substring(message.indexOf("|")+1, message.length());
+		System.out.println("Sub: " + message);
+		
+		if(action.equals("CheckRegisterName"))
+		{
+			if(message.equals(registeredName))
+			{
+				try{
+					String sendMessage = "NameTaken";
+					byte[] sendBuf = sendMessage.getBytes();
+					DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+					multicastBroadcastSocket.send(dgpSend);
+					System.out.println(sendMessage);
+				}catch(IOException ex){
+					ex.printStackTrace();
+				}
+			}
+			else
+			{
+				registeredUser.add(message);
+			}
+		}
 	}
 }
