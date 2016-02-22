@@ -148,9 +148,13 @@ public class Group3 extends JFrame {
 					if (friendList.isEmpty()) {
 						btnDeleteFriend.setEnabled(false);
 					}
+					taFriendList
+							.setText(taFriendList.getText().replaceFirst(txtFriend.getText().toString() + "\n", ""));
+					txtFriend.setText("");
 				} else {
 					JOptionPane.showMessageDialog(null,
 							txtFriend.getText().toString() + " doesnt exists in your friend list!");
+					txtFriend.setText("");
 				}
 			}
 		});
@@ -232,6 +236,7 @@ public class Group3 extends JFrame {
 							JOptionPane.showMessageDialog(null, "You have been registered");
 							btnRegister.setEnabled(false);
 							btnAddFriend.setEnabled(true);
+							txtUserName.setEditable(false);
 							multicastBroadcastSocket.setSoTimeout(0); // Disable
 																		// time
 																		// out
@@ -284,7 +289,7 @@ public class Group3 extends JFrame {
 															btnDeleteFriend.setEnabled(true);
 														}
 														friendList.add(txtFriend.getText());
-
+														txtFriend.setText("");
 														// System.out.println(tentativeName
 														// + " already taken!");
 														// txtUserName.setText("The
@@ -305,6 +310,7 @@ public class Group3 extends JFrame {
 													JOptionPane.showMessageDialog(null,
 															txtFriend.getText().toString() + " does not exists");
 													// btnRegister.setEnabled(false);
+													txtFriend.setText("");
 													multicastBroadcastSocket.setSoTimeout(0); // Disable
 																								// time
 																								// out
