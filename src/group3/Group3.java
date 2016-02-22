@@ -34,6 +34,7 @@ public class Group3 extends JFrame {
 	InetAddress multicastChatGroup = null;
 
 	String registeredName = "";
+	String testing = "";
 	String processID = ManagementFactory.getRuntimeMXBean().getName();
 
 	ArrayList<String> registeredUser = new ArrayList();
