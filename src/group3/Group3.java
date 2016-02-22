@@ -26,6 +26,7 @@ import java.awt.event.ActionEvent;
 
 public class Group3 extends JFrame {
 	private static String BROADCAST_ADDRESS = "235.1.1.1";
+	private static String Group_ADDRESS = "235.1.1.";
 	private static int PORT = 6789;
 
 	MulticastSocket multicastBroadcastSocket = null;
@@ -48,6 +49,7 @@ public class Group3 extends JFrame {
 	boolean broadcastConnect = false;
 
 	boolean broadcastFindFriend = false;
+	boolean broadcastAddGroup = false;
 
 	/*
 	 * MulticastSocket multicastSocket = null; InetAddress multicastGroup =
@@ -65,6 +67,7 @@ public class Group3 extends JFrame {
 	private JTextField txtJoinGroup;
 	private JTextField txtMessage;
 	public JTextArea taFriendList = new JTextArea();
+	public JTextArea taGroupList = new JTextArea();
 	JButton btnAddFriend = new JButton("Add");
 
 	/**
@@ -224,7 +227,7 @@ public class Group3 extends JFrame {
 										try {
 											System.out.println("listening..");
 											multicastBroadcastSocket.receive(dgpReceived);
-
+// add friend
 											if (broadcastFindFriend) {
 												// byte receiveBuf[] = new
 												// byte[1000];
@@ -292,7 +295,56 @@ public class Group3 extends JFrame {
 
 												DoAction(message);
 											}
+// add group
+											if (broadcastAddGroup) {
 
+
+												System.out.println("Before Try");
+												multicastBroadcastSocket.setSoTimeout(3000); // 3
+																								// seconds
+																								// timeout
+												try {
+													multicastBroadcastSocket.receive(dgpReceived);
+													multicastBroadcastSocket.setSoTimeout(0); // Disable
+																								// time
+																								// out
+
+													System.out.println("received");
+
+													byte[] receivedData = dgpReceived.getData();
+													int length = dgpReceived.getLength();
+
+													String receivedMessage = new String(receivedData, 0, length);
+
+													if (receivedMessage.equals("GroupExists|")) {
+														// dialogue alert
+														JOptionPane.showMessageDialog(null, txtGroup.getText()+"already exist");
+													}
+
+												} catch (SocketTimeoutException ex) {
+													// registeredName =
+													// tentativeName;
+													System.out.println(txtGroup.getText().toString() + " group does not exists");
+													// btnRegister.setEnabled(false);
+													GroupList.add(txtGroup.getText());
+													taGroupList.setText(txtGroup.getText());
+													System.out.println(GroupList);
+													multicastBroadcastSocket.setSoTimeout(0); // Disable
+																								// time
+																								// out
+												}
+
+												// multicastBroadcastSocket.receive(dgpReceived);
+												broadcastFindFriend = false;
+											} else {
+												byte[] receivedData = dgpReceived.getData();
+												int length = dgpReceived.getLength();
+
+												String message = new String(receivedData, 0, length);
+												System.out.println("Received broadcast message: " + message);
+
+												DoAction(message);
+											}	
 										} catch (IOException ex) {
 											ex.printStackTrace();
 										}
@@ -317,11 +369,11 @@ public class Group3 extends JFrame {
 
 				String tentativeFriendName = txtFriend.getText();
 
-				if (registeredUser.contains(tentativeFriendName)) {
-					taFriendList.setText(tentativeFriendName);
-					// System.out.println(tentativeFriendName + " already in
-					// your friend list|");
-				} else {
+//				if (registeredUser.contains(tentativeFriendName)) {
+//					taFriendList.setText(tentativeFriendName);
+//					// System.out.println(tentativeFriendName + " already in
+//					// your friend list|");
+//				} else {
 					try {
 						// if(!broadcastConnect)
 						// {
@@ -341,7 +393,7 @@ public class Group3 extends JFrame {
 					} catch (IOException ex) {
 						ex.printStackTrace();
 					}
-				}
+				//}
 			}
 		});
 		btnAddFriend.setBounds(356, 54, 120, 26);
@@ -352,6 +404,29 @@ public class Group3 extends JFrame {
 		getContentPane().add(btnDeleteFriend);
 
 		JButton btnAddGroup = new JButton("Add");
+		btnAddGroup.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				String tentativeGroupName = txtGroup.getText();
+
+				if (GroupList.contains(tentativeGroupName)) {
+					taGroupList.setText(tentativeGroupName);
+					System.out.println(tentativeGroupName + " already in your group list|");
+				} else {
+					try {
+						broadcastAddGroup = true;
+						String friendName = "CheckAddGroup|" + tentativeGroupName;
+						byte[] sendBuf = friendName.getBytes();
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup,
+								6789);
+						multicastBroadcastSocket.send(dgpSend);
+
+					} catch (IOException ex) {
+						ex.printStackTrace();
+					}
+				}
+			}
+		});
 		btnAddGroup.setBounds(356, 100, 120, 26);
 		getContentPane().add(btnAddGroup);
 
@@ -455,6 +530,21 @@ public class Group3 extends JFrame {
 				}
 			}
 
+		}
+		else if (action.equals("CheckAddGroup")) {
+			if (GroupList.contains(message)) {
+				try {
+						String sendMessage = "GroupExists|";
+						byte[] sendBuf = sendMessage.getBytes();
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+						multicastBroadcastSocket.send(dgpSend);
+						System.out.println(sendMessage);
+
+
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
 		}
 	}
 }
