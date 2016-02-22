@@ -151,8 +151,15 @@ public class Group3 extends JFrame {
 				 */
 
 				String tentativeName = txtUserName.getText();
+<<<<<<< HEAD
 
 				if (registeredUser.contains(tentativeName)) {
+=======
+				System.out.println();
+				
+				if(registeredUser.contains(tentativeName))
+				{
+>>>>>>> origin/master
 					System.out.println(tentativeName + " already taken!");
 				} else {
 					try {
@@ -254,6 +261,7 @@ public class Group3 extends JFrame {
 					// your friend list|");
 				} else {
 					try {
+<<<<<<< HEAD
 						// if(!broadcastConnect)
 						// {
 						// multicastBroadcastGroup =
@@ -309,6 +317,25 @@ public class Group3 extends JFrame {
 																		// time
 																		// out
 
+=======
+						multicastBroadcastSocket.receive(dgpReceived);
+						multicastBroadcastSocket.setSoTimeout(0); //Disable time out
+						
+						
+						System.out.println("received");
+						
+						byte[] receivedData = dgpReceived.getData();
+						int length = dgpReceived.getLength();
+						
+						String receivedMessage = new String(receivedData, 0, length);
+						
+						if(receivedMessage.equals("FriendExists|"))
+						{
+							taFriendList.setText(tentativeFriendName);
+							friendList.add(tentativeFriendName);
+//							System.out.println(tentativeName + " already taken!");
+//							txtUserName.setText("The name " + tentativeName + " is already taken!");
+>>>>>>> origin/master
 						}
 
 					} catch (IOException ex) {
@@ -412,6 +439,9 @@ public class Group3 extends JFrame {
 				} catch (IOException ex) {
 					ex.printStackTrace();
 				}
+			}
+			else{
+				
 			}
 
 		}
