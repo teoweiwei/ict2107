@@ -7,6 +7,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.JTextPane;
@@ -197,12 +198,15 @@ public class Group3 extends JFrame {
 
 							if (receivedMessage.equals("NameTaken|")) {
 								System.out.println(tentativeName + " already taken!");
-								txtUserName.setText("The name " + tentativeName + " is already taken!");
+								//txtUserName.setText("The name " + tentativeName + " is already taken!");
+								
+								JOptionPane.showMessageDialog(null, tentativeName + " is already taken!");
 							}
 
 						} catch (SocketTimeoutException ex) {
 							registeredName = tentativeName;
 							System.out.println(registeredName + " you are registered!");
+							JOptionPane.showMessageDialog(null, "You have been registered");
 							btnRegister.setEnabled(false);
 							btnAddFriend.setEnabled(true);
 							multicastBroadcastSocket.setSoTimeout(0); // Disable
@@ -258,6 +262,11 @@ public class Group3 extends JFrame {
 														// name " +
 														// tentativeName + " is
 														// already taken!");
+													}
+													else if(receivedMessage.equals("FriendDoNotExists|"))
+													{
+														
+														JOptionPane.showMessageDialog(null, txtFriend.getText()+"doesn't wish to be your friend");
 													}
 
 												} catch (SocketTimeoutException ex) {
@@ -422,11 +431,25 @@ public class Group3 extends JFrame {
 		} else if (action.equals("CheckFriendName")) {
 			if (message.equals(registeredName)) {
 				try {
-					String sendMessage = "FriendExists|";
-					byte[] sendBuf = sendMessage.getBytes();
-					DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
-					multicastBroadcastSocket.send(dgpSend);
-					System.out.println(sendMessage);
+					int dialogButton = JOptionPane.YES_NO_OPTION;
+					int dialogResult = JOptionPane.showConfirmDialog(null,"Someone would like to add you","Friend Request",dialogButton);
+					if(dialogResult ==0)
+					{
+						String sendMessage = "FriendExists|";
+						byte[] sendBuf = sendMessage.getBytes();
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+						multicastBroadcastSocket.send(dgpSend);
+						System.out.println(sendMessage);
+					}
+					else
+					{
+						String sendMessage = "FriendDoNotExists|";
+						byte[] sendBuf = sendMessage.getBytes();
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+						multicastBroadcastSocket.send(dgpSend);
+						System.out.println(sendMessage);
+					}
+
 				} catch (IOException ex) {
 					ex.printStackTrace();
 				}
