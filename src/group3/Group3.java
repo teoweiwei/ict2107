@@ -165,6 +165,7 @@ public class Group3 extends JFrame {
 				}*/
 				
 				String tentativeName = txtUserName.getText();
+				System.out.println();
 				
 				if(registeredUser.contains(tentativeName))
 				{
@@ -288,6 +289,8 @@ public class Group3 extends JFrame {
 					try {
 						multicastBroadcastSocket.receive(dgpReceived);
 						multicastBroadcastSocket.setSoTimeout(0); //Disable time out
+						
+						
 						System.out.println("received");
 						
 						byte[] receivedData = dgpReceived.getData();
@@ -422,6 +425,9 @@ public class Group3 extends JFrame {
 				}catch(IOException ex){
 					ex.printStackTrace();
 				}
+			}
+			else{
+				
 			}
 
 		}
