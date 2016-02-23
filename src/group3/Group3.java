@@ -382,7 +382,7 @@ public class Group3 extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String groupName = cobGroupList.getSelectedItem().toString();
 				String groupIP = GetGroupIP(groupName);
-				
+				taMessage.setText("");
 				if(multicastChatSocket != null)
 				{
 					try{						
@@ -439,7 +439,7 @@ public class Group3 extends JFrame {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+				taMessage.setText("");
 				lblMessageBox.setText("Current Chat: None");								
 			
 			}
