@@ -26,7 +26,7 @@ import java.awt.event.ActionEvent;
 
 public class Group3 extends JFrame {
 	private static String BROADCAST_ADDRESS = "235.1.1.1";
-	private static String Group_ADDRESS = "235.1.1.";
+	private static String GROUP_ADDRESS = "235.1.1.";
 	private static int PORT = 6789;
 
 	MulticastSocket multicastBroadcastSocket = null;
@@ -132,22 +132,11 @@ public class Group3 extends JFrame {
 		txtGroup = new JTextField();
 		txtGroup.setBounds(108, 100, 240, 26);
 		getContentPane().add(txtGroup);
-		// txtGroup.setColumns(10);
 
 		JButton btnRegister = new JButton("Register");
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-
-				/*
-				 * try{ String msg = txtUserName.getText(); msg = name +
-				 * "change name to " + msg; byte[] buf = msg.getBytes();
-				 * DatagramPacket dgpSend = new DatagramPacket(buf, buf.length,
-				 * multicastGroup, port); multicastSocket.send(dgpSend);
-				 * }catch(IOException ex){ ex.printStackTrace(); }
-				 */
-
 				String tentativeName = txtUserName.getText();
-				System.out.println();
 
 				if (registeredUser.contains(tentativeName)) {
 					System.out.println(tentativeName + " already taken!");
