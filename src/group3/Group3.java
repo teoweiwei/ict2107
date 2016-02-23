@@ -21,6 +21,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.awt.event.ActionEvent;
@@ -376,10 +377,65 @@ public class Group3 extends JFrame {
 		getContentPane().add(lblGroupList);
 
 		JButton btnJoinGroup = new JButton("Join");
+		btnJoinGroup.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				String groupName = cobGroupList.getSelectedItem().toString();
+				String gIp = GetGroupIP(groupName);
+				
+				try {
+					multicastChatGroup = InetAddress.getByName(gIp);
+					try {
+						multicastChatSocket = new MulticastSocket(PORT);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					try {
+						multicastChatSocket.joinGroup(multicastChatGroup);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				
+				
+				lblMessageBox.setText("Current Chat: " + groupName);
+				
+				
+				System.out.println(ownCreatedGroupList);
+				System.out.println(groupName);
+				
+				
+			}
+		});
 		btnJoinGroup.setBounds(356, 146, 120, 26);
 		getContentPane().add(btnJoinGroup);
-
+		
 		JButton btnLeaveGroup = new JButton("Leave");
+		btnLeaveGroup.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {				
+				try {
+					multicastChatGroup = InetAddress.getByName(BROADCAST_ADDRESS);
+					try {
+						multicastChatSocket = new MulticastSocket(PORT);
+						multicastChatSocket.joinGroup(multicastChatGroup);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				lblMessageBox.setText("Current Chat: None");								
+			}
+		});
 		btnLeaveGroup.setBounds(484, 146, 120, 26);
 		getContentPane().add(btnLeaveGroup);
 		
