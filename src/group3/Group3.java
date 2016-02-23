@@ -551,6 +551,9 @@ public class Group3 extends JFrame {
 						multicastChatSocket = new MulticastSocket(PORT);
 						multicastChatSocket.joinGroup(multicastChatGroup);
 						
+						ownCreatedGroupList.add(groupName + "|" + groupIP);
+						cobGroupList.addItem(groupName);
+						
 						lblMessageBox.setText("Current Chat: " + groupName);
 						
 						//Create a new thread to keep listening for packets from the group
