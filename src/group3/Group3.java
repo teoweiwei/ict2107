@@ -47,28 +47,17 @@ public class Group3 extends JFrame {
 	ArrayList<String> GroupList = new ArrayList();
 
 	boolean broadcastConnect = false;
-
 	boolean broadcastFindFriend = false;
 	boolean broadcastAddGroup = false;
-
-	/*
-	 * MulticastSocket multicastSocket = null; InetAddress multicastGroup =
-	 * null;
-	 * 
-	 * MulticastSocket multicastSocketCommon = null; InetAddress
-	 * multicastGroupCommon = null; String ipAddressCommon = "228.1.1.1"; String
-	 * ipAddress = "228.1.1."; String room=""; int port = 6789; String name =
-	 * "";
-	 */
 
 	private JTextField txtUserName;
 	private JTextField txtFriend;
 	private JTextField txtGroup;
 	private JTextField txtJoinGroup;
 	private JTextField txtMessage;
-	public JTextArea taFriendList = new JTextArea();
-	public JTextArea taGroupList = new JTextArea();
-	JButton btnAddFriend = new JButton("Add");
+	private JTextArea taFriendList;
+	private JTextArea taGroupList;
+	private JButton btnAddFriend;
 
 	/**
 	 * Launch the application.
@@ -90,27 +79,6 @@ public class Group3 extends JFrame {
 	 * Create the frame.
 	 */
 	public Group3() {
-		/*
-		 * try{ multicastGroupCommon = InetAddress.getByName(ipAddressCommon);
-		 * multicastSocketCommon = new MulticastSocket(port);
-		 * 
-		 * //Join multicastSocketCommon.joinGroup(multicastGroupCommon);
-		 * 
-		 * //Create a new thread to keep listening for packets from the group
-		 * new Thread(new Runnable() {
-		 * 
-		 * @Override public void run(){ byte buf1[] = new byte[1000];
-		 * DatagramPacket dgpReceived = new DatagramPacket(buf1, buf1.length);
-		 * while(true){ try{ multicastSocketCommon.receive(dgpReceived); byte[]
-		 * receivedData = dgpReceived.getData(); int length =
-		 * dgpReceived.getLength();
-		 * 
-		 * //Assumed we received string String msg = new String(receivedData, 0,
-		 * length); room += msg; //System.out.println(room); }catch(IOException
-		 * ex){ ex.printStackTrace(); } } } }).start();
-		 * 
-		 * }catch(IOException ex){ ex.printStackTrace(); }
-		 */
 		setTitle("ICT2107 Project 1 - Group 3");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 760, 610);
@@ -133,7 +101,6 @@ public class Group3 extends JFrame {
 		txtFriend.setBounds(108, 54, 240, 26);
 		getContentPane().add(txtFriend);
 		// txtFriend.setColumns(10);
-		JButton btnAddFriend = new JButton("Add");
 
 		JLabel lblGroup = new JLabel("Group");
 		lblGroup.setBounds(8, 100, 100, 26);
@@ -368,7 +335,6 @@ public class Group3 extends JFrame {
 																								// out
 												}
 
-												// multicastBroadcastSocket.receive(dgpReceived);
 												broadcastFindFriend = false;
 											} else {
 												byte[] receivedData = dgpReceived.getData();
@@ -396,28 +362,16 @@ public class Group3 extends JFrame {
 		btnRegister.setBounds(356, 8, 120, 26);
 		getContentPane().add(btnRegister);
 
-		// JButton btnAddFriend = new JButton("Add");
+		btnAddFriend = new JButton("Add");
 		btnAddFriend.setEnabled(false);
 		btnAddFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-
 				String tentativeFriendName = txtFriend.getText();
 
 				if (friendList.contains(tentativeFriendName)) {
-					// taFriendList.setText(tentativeFriendName);
 					JOptionPane.showMessageDialog(null, tentativeFriendName + " is already your friend!");
-					// System.out.println(tentativeFriendName + " already in
-					// your friend list|");
 				} else {
 					try {
-						// if(!broadcastConnect)
-						// {
-						// multicastBroadcastGroup =
-						// InetAddress.getByName(BROADCAST_ADDRESS);
-						// multicastBroadcastSocket = new MulticastSocket(PORT);
-						// multicastBroadcastSocket.joinGroup(multicastBroadcastGroup);
-						// broadcastConnect = true;
-						// }
 						broadcastFindFriend = true;
 						String friendName = "CheckFriendName|" + tentativeFriendName + "]OwnName["
 								+ txtUserName.getText().toString();
@@ -438,7 +392,6 @@ public class Group3 extends JFrame {
 		JButton btnAddGroup = new JButton("Add");
 		btnAddGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-
 				String tentativeGroupName = txtGroup.getText();
 
 				if (GroupList.contains(tentativeGroupName)) {
@@ -477,7 +430,6 @@ public class Group3 extends JFrame {
 		txtJoinGroup = new JTextField();
 		txtJoinGroup.setBounds(356, 150, 120, 26);
 		getContentPane().add(txtJoinGroup);
-		// txtJoinGroup.setColumns(10);
 
 		JButton btnJoinGroup = new JButton("Join");
 		btnJoinGroup.setBounds(484, 150, 120, 26);
@@ -486,12 +438,13 @@ public class Group3 extends JFrame {
 		JButton btnLeaveGroup = new JButton("Leave");
 		btnLeaveGroup.setBounds(612, 150, 120, 26);
 		getContentPane().add(btnLeaveGroup);
-
+		
+		taFriendList = new JTextArea();
 		JScrollPane spFriendList = new JScrollPane(taFriendList);
 		spFriendList.setBounds(8, 184, 166, 300);
 		getContentPane().add(spFriendList);
 
-		JTextArea taGroupList = new JTextArea();
+		taGroupList = new JTextArea();
 		JScrollPane spGroupList = new JScrollPane(taGroupList);
 		spGroupList.setBounds(182, 184, 166, 300);
 		getContentPane().add(spGroupList);
