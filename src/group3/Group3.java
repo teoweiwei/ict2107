@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.awt.event.ActionEvent;
 
 public class Group3 extends JFrame {
-	private static String BROADCAST_ADDRESS = "235.1.1.1";
+	private static String BROADCAST_ADDRESS = "234.1.1.1";
 	private static String GROUP_ADDRESS = "235.1.1.";
 	private static int PORT = 6789;
 
@@ -151,26 +151,18 @@ public class Group3 extends JFrame {
 
 						String userName = "CheckRegisterName|" + tentativeName;
 						byte[] sendBuf = userName.getBytes();
-						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup,
-								6789);
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, 6789);
 						multicastBroadcastSocket.send(dgpSend);
 
 						byte receiveBuf[] = new byte[1000];
 						DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
-						multicastBroadcastSocket.receive(dgpReceived); // discard
-																		// own
-																		// broadcast
-																		// message
+						multicastBroadcastSocket.receive(dgpReceived);
 
 						System.out.println("Before Try");
-						multicastBroadcastSocket.setSoTimeout(3000); // 3
-																		// seconds
-																		// timeout
+						multicastBroadcastSocket.setSoTimeout(3000);
 						try {
 							multicastBroadcastSocket.receive(dgpReceived);
-							multicastBroadcastSocket.setSoTimeout(0); // Disable
-																		// time
-																		// out
+							multicastBroadcastSocket.setSoTimeout(0);
 							System.out.println("received");
 
 							byte[] receivedData = dgpReceived.getData();
@@ -179,23 +171,18 @@ public class Group3 extends JFrame {
 							String receivedMessage = new String(receivedData, 0, length);
 
 							if (receivedMessage.equals("NameTaken|")) {
-								System.out.println(tentativeName + " already taken!");
-								// txtUserName.setText("The name " +
-								// tentativeName + " is already taken!");
-
 								JOptionPane.showMessageDialog(null, tentativeName + " is already taken!");
 							}
 
 						} catch (SocketTimeoutException ex) {
+							multicastBroadcastSocket.setSoTimeout(0);
+							
 							registeredName = tentativeName;
-							System.out.println(registeredName + " you are registered!");
 							JOptionPane.showMessageDialog(null, "You have been registered");
+							
 							btnRegister.setEnabled(false);
 							btnAddFriend.setEnabled(true);
 							txtUserName.setEditable(false);
-							multicastBroadcastSocket.setSoTimeout(0); // Disable
-																		// time
-																		// out
 
 							new Thread(new Runnable() {
 								@Override
@@ -208,27 +195,14 @@ public class Group3 extends JFrame {
 										try {
 											System.out.println("listening..");
 											multicastBroadcastSocket.receive(dgpReceived);
-											// add friend
-											if (broadcastFindFriend) {
-												// byte receiveBuf[] = new
-												// byte[1000];
-												// DatagramPacket dgpReceived =
-												// new
-												// DatagramPacket(receiveBuf,
-												// receiveBuf.length);
-												// multicastBroadcastSocket.receive(dgpReceived);
-												// // discard own broadcast
-												// message
-
+											
+											// Add friend
+											/*if (broadcastFindFriend) {
 												System.out.println("Before Try");
-												multicastBroadcastSocket.setSoTimeout(3000); // 3
-																								// seconds
-																								// timeout
+												multicastBroadcastSocket.setSoTimeout(3000);
 												try {
 													multicastBroadcastSocket.receive(dgpReceived);
-													multicastBroadcastSocket.setSoTimeout(0); // Disable
-																								// time
-																								// out
+													multicastBroadcastSocket.setSoTimeout(0);
 
 													System.out.println("received");
 
@@ -238,54 +212,30 @@ public class Group3 extends JFrame {
 													String receivedMessage = new String(receivedData, 0, length);
 
 													if (receivedMessage.equals("FriendExists|")) {
-														taFriendList.setText(
-																taFriendList.getText() + txtFriend.getText() + "\n");
+														taFriendList.setText(taFriendList.getText() + txtFriend.getText() + "\n");
 														if (friendList.isEmpty()) {
-
 															btnDeleteFriend.setEnabled(true);
 														}
+														
 														friendList.add(txtFriend.getText());
 														txtFriend.setText("");
-														// System.out.println(tentativeName
-														// + " already taken!");
-														// txtUserName.setText("The
-														// name " +
-														// tentativeName + " is
-														// already taken!");
 													} else if (receivedMessage.equals("FriendDoNotExists|")) {
 
-														JOptionPane.showMessageDialog(null, txtFriend.getText()
-																+ " doesn't wish to be your friend");
+														JOptionPane.showMessageDialog(null, txtFriend.getText() + " doesn't wish to be your friend");
 													}
 
 												} catch (SocketTimeoutException ex) {
-													// registeredName =
-													// tentativeName;
-													System.out.println(
-															txtFriend.getText().toString() + " does not exists");
-													JOptionPane.showMessageDialog(null,
-															txtFriend.getText().toString() + " does not exists");
+													multicastBroadcastSocket.setSoTimeout(0);
+													System.out.println(txtFriend.getText().toString() + " does not exists");
+													JOptionPane.showMessageDialog(null, txtFriend.getText() + " does not exists");
 													// btnRegister.setEnabled(false);
 													txtFriend.setText("");
-													multicastBroadcastSocket.setSoTimeout(0); // Disable
-																								// time
-																								// out
-
 												}
 
-												// multicastBroadcastSocket.receive(dgpReceived);
 												broadcastFindFriend = false;
-											} else {
-												byte[] receivedData = dgpReceived.getData();
-												int length = dgpReceived.getLength();
-
-												String message = new String(receivedData, 0, length);
-												System.out.println("Received broadcast message: " + message);
-
-												DoAction(message);
-											}
+											} 
 											// add group
-											if (broadcastAddGroup) {
+											else if (broadcastAddGroup) {
 
 												System.out.println("Before Try");
 												multicastBroadcastSocket.setSoTimeout(3000); // 3
@@ -324,8 +274,9 @@ public class Group3 extends JFrame {
 																								// out
 												}
 
-												broadcastFindFriend = false;
-											} else {
+												broadcastAddGroup = false;
+											}
+											else {*/
 												byte[] receivedData = dgpReceived.getData();
 												int length = dgpReceived.getLength();
 
@@ -333,7 +284,7 @@ public class Group3 extends JFrame {
 												System.out.println("Received broadcast message: " + message);
 
 												DoAction(message);
-											}
+											//}
 										} catch (IOException ex) {
 											ex.printStackTrace();
 										}
@@ -362,11 +313,9 @@ public class Group3 extends JFrame {
 				} else {
 					try {
 						broadcastFindFriend = true;
-						String friendName = "CheckFriendName|" + tentativeFriendName + "]OwnName["
-								+ txtUserName.getText().toString();
+						String friendName = "CheckFriendName|" + tentativeFriendName + "|" + txtUserName.getText();
 						byte[] sendBuf = friendName.getBytes();
-						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup,
-								6789);
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 						multicastBroadcastSocket.send(dgpSend);
 
 					} catch (IOException ex) {
@@ -391,8 +340,7 @@ public class Group3 extends JFrame {
 						broadcastAddGroup = true;
 						String friendName = "CheckAddGroup|" + tentativeGroupName;
 						byte[] sendBuf = friendName.getBytes();
-						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup,
-								6789);
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 						multicastBroadcastSocket.send(dgpSend);
 
 					} catch (IOException ex) {
@@ -478,26 +426,29 @@ public class Group3 extends JFrame {
 				registeredUser.add(message);
 			}
 		} else if (action.equals("CheckFriendName")) {
-			String nameToCheck = message.substring(message.indexOf("|") + 1, message.indexOf("]"));
+			String nameToCheck = message.substring(0, message.indexOf("|"));
+			message = message.substring(message.indexOf("|") + 1, message.length());
+			
 			if (nameToCheck.equals(registeredName)) {
 				try {
 					int dialogButton = JOptionPane.YES_NO_OPTION;
-					String personAdding = message.substring(message.indexOf("[") + 1, message.length());
-					int dialogResult = JOptionPane.showConfirmDialog(null, personAdding + " would like to add you",
-							"Friend Request", dialogButton);
+					String personAdding = message;
+					
+					int dialogResult = JOptionPane.showConfirmDialog(null, personAdding + " would like to add you", "Friend Request", dialogButton);
+					
 					if (dialogResult == 0) {
-						String sendMessage = "FriendExists|";
+						String sendMessage = personAdding + "|FriendRequestAccepted|" + registeredName;
 						byte[] sendBuf = sendMessage.getBytes();
-						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup,
-								PORT);
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 						multicastBroadcastSocket.send(dgpSend);
+						
 						System.out.println(sendMessage);
 					} else {
-						String sendMessage = "FriendDoNotExists|";
+						String sendMessage = personAdding + "|FriendRequestRejected|" + registeredName;
 						byte[] sendBuf = sendMessage.getBytes();
-						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup,
-								PORT);
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 						multicastBroadcastSocket.send(dgpSend);
+						
 						System.out.println(sendMessage);
 					}
 
@@ -506,7 +457,23 @@ public class Group3 extends JFrame {
 				}
 			}
 
-		} else if (action.equals("CheckAddGroup")) {
+		} 
+		else if(action.equals(registeredName))
+		{
+			String receivedMessage = message.substring(0, message.indexOf("|"));
+			message = message.substring(message.indexOf("|") + 1, message.length());
+			
+			if(receivedMessage.equals("FriendRequestAccepted"))
+			{
+				taFriendList.setText(taFriendList.getText() + message + "\n");
+				JOptionPane.showMessageDialog(null, message + " accepted your friend request");
+			}
+			else if(receivedMessage.equals("FriendRequestRejected"))
+			{
+				JOptionPane.showMessageDialog(null, message + " doesn't wish to be your friend");
+			}
+		}
+		else if (action.equals("CheckAddGroup")) {
 			if (GroupList.contains(message)) {
 				try {
 					String sendMessage = "GroupExists|";
