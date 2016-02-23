@@ -58,7 +58,7 @@ public class Group3 extends JFrame {
 	private JTextArea taFriendList;
 	private JTextArea taGroupList;
 	private JButton btnAddFriend;
-
+	private JButton btnDeleteFriend;
 	/**
 	 * Launch the application.
 	 */
@@ -106,21 +106,19 @@ public class Group3 extends JFrame {
 		lblGroup.setBounds(8, 100, 100, 26);
 		getContentPane().add(lblGroup);
 
-		JButton btnDeleteFriend = new JButton("Delete");
+		btnDeleteFriend = new JButton("Delete");
 		btnDeleteFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (friendList.contains(txtFriend.getText().toString())) {
+				if (friendList.contains(txtFriend.getText())) {
 					friendList.remove(txtFriend.getText().toString());
 					JOptionPane.showMessageDialog(null, txtFriend.getText().toString() + " has been removed");
 					if (friendList.isEmpty()) {
 						btnDeleteFriend.setEnabled(false);
 					}
-					taFriendList
-							.setText(taFriendList.getText().replaceFirst(txtFriend.getText().toString() + "\n", ""));
+					taFriendList.setText(taFriendList.getText().replaceFirst(txtFriend.getText().toString() + "\n", ""));
 					txtFriend.setText("");
 				} else {
-					JOptionPane.showMessageDialog(null,
-							txtFriend.getText().toString() + " doesnt exists in your friend list!");
+					JOptionPane.showMessageDialog(null, txtFriend.getText().toString() + " doesnt exists in your friend list!");
 					txtFriend.setText("");
 				}
 			}
@@ -196,46 +194,7 @@ public class Group3 extends JFrame {
 											System.out.println("listening..");
 											multicastBroadcastSocket.receive(dgpReceived);
 											
-											// Add friend
-											/*if (broadcastFindFriend) {
-												System.out.println("Before Try");
-												multicastBroadcastSocket.setSoTimeout(3000);
-												try {
-													multicastBroadcastSocket.receive(dgpReceived);
-													multicastBroadcastSocket.setSoTimeout(0);
-
-													System.out.println("received");
-
-													byte[] receivedData = dgpReceived.getData();
-													int length = dgpReceived.getLength();
-
-													String receivedMessage = new String(receivedData, 0, length);
-
-													if (receivedMessage.equals("FriendExists|")) {
-														taFriendList.setText(taFriendList.getText() + txtFriend.getText() + "\n");
-														if (friendList.isEmpty()) {
-															btnDeleteFriend.setEnabled(true);
-														}
-														
-														friendList.add(txtFriend.getText());
-														txtFriend.setText("");
-													} else if (receivedMessage.equals("FriendDoNotExists|")) {
-
-														JOptionPane.showMessageDialog(null, txtFriend.getText() + " doesn't wish to be your friend");
-													}
-
-												} catch (SocketTimeoutException ex) {
-													multicastBroadcastSocket.setSoTimeout(0);
-													System.out.println(txtFriend.getText().toString() + " does not exists");
-													JOptionPane.showMessageDialog(null, txtFriend.getText() + " does not exists");
-													// btnRegister.setEnabled(false);
-													txtFriend.setText("");
-												}
-
-												broadcastFindFriend = false;
-											} 
-											// add group
-											else if (broadcastAddGroup) {
+											/*if (broadcastAddGroup) {
 
 												System.out.println("Before Try");
 												multicastBroadcastSocket.setSoTimeout(3000); // 3
@@ -442,6 +401,19 @@ public class Group3 extends JFrame {
 						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 						multicastBroadcastSocket.send(dgpSend);
 						
+						taFriendList.setText(taFriendList.getText() + personAdding + "\n");
+						friendList.add(personAdding);
+						
+						if(friendList.isEmpty())
+						{
+							btnDeleteFriend.setEnabled(false);
+							
+						}
+						else
+						{
+							btnDeleteFriend.setEnabled(true);
+						}
+						
 						System.out.println(sendMessage);
 					} else {
 						String sendMessage = personAdding + "|FriendRequestRejected|" + registeredName;
@@ -466,6 +438,18 @@ public class Group3 extends JFrame {
 			if(receivedMessage.equals("FriendRequestAccepted"))
 			{
 				taFriendList.setText(taFriendList.getText() + message + "\n");
+				friendList.add(message);
+				
+				if(friendList.isEmpty())
+				{
+					btnDeleteFriend.setEnabled(false);
+					
+				}
+				else
+				{
+					btnDeleteFriend.setEnabled(true);
+				}
+				
 				JOptionPane.showMessageDialog(null, message + " accepted your friend request");
 			}
 			else if(receivedMessage.equals("FriendRequestRejected"))
