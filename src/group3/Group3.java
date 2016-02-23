@@ -21,7 +21,6 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.awt.event.ActionEvent;
@@ -44,11 +43,11 @@ public class Group3 extends JFrame {
 	ArrayList<String> registeredUser = new ArrayList();
 
 	ArrayList<String> friendList = new ArrayList();
+	
+	ArrayList<String> groupFriendList = new ArrayList();
 
 	ArrayList<String> ownCreatedGroupList = new ArrayList();
 	
-	// Tentatively to be a 2D ArrayList [[groupName1, Grp1 friend1, Grp1
-	// friend2], [groupName2, Grp2 friend1, Grp2 friend2]]
 	ArrayList<String> groupList = new ArrayList();
 
 	boolean broadcastConnect = false;
@@ -233,7 +232,8 @@ public class Group3 extends JFrame {
 													System.out.println("IP address: " + groupIP + ", generated for group " + txtGroup.getText());
 													
 													ownCreatedGroupList.add(txtGroup.getText() + "|" + groupIP);
-													cobGroupList.addItem(txtGroup.getText());
+													groupList.add(txtGroup.getText() + "|" + groupIP);
+													UpdateGroupList();
 
 													multicastChatGroup = InetAddress.getByName(groupIP);
 													multicastChatSocket = new MulticastSocket(PORT);
@@ -255,7 +255,8 @@ public class Group3 extends JFrame {
 																	int length = dgpReceived.getLength();
 																	
 																	String msg = new String(receivedData, 0, length);
-																	taMessage.append(msg + "\n");
+																	
+																	DoMessageAction(msg);
 																}catch(IOException ex){
 																	ex.printStackTrace();
 																}
@@ -378,47 +379,53 @@ public class Group3 extends JFrame {
 
 		JButton btnJoinGroup = new JButton("Join");
 		btnJoinGroup.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
+			public void actionPerformed(ActionEvent e) {
 				String groupName = cobGroupList.getSelectedItem().toString();
-				String gIp = GetGroupIP(groupName);
+				String groupIP = GetGroupIP(groupName);
 				
-				try {
-					multicastChatGroup = InetAddress.getByName(gIp);
-					try {
-						multicastChatSocket = new MulticastSocket(PORT);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+				if(multicastChatSocket != null)
+				{
+					try{						
+						String msg = txtMessage.getText();
+						msg = "LeftGroup|" + registeredName;
+						byte[] buf = msg.getBytes();
+						
+						DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+						multicastChatSocket.send(dgpSend);
+					}catch(IOException ex){
+						ex.printStackTrace();
 					}
-					try {
-						multicastChatSocket.joinGroup(multicastChatGroup);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-				} catch (UnknownHostException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
 				
-				
-				
-				lblMessageBox.setText("Current Chat: " + groupName);
-				
-				
-				System.out.println(ownCreatedGroupList);
-				System.out.println(groupName);
-				
-				
+				try {
+					multicastChatGroup = InetAddress.getByName(groupIP);
+					multicastChatSocket = new MulticastSocket(PORT);
+					multicastChatSocket.joinGroup(multicastChatGroup);
+
+					lblMessageBox.setText("Current Chat: " + groupName);
+
+					groupFriendList.clear();
+					
+					try{
+						String whoIsThere = "WhoIsThere|"+registeredName;
+						byte[] buf = whoIsThere.getBytes();
+						
+						DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+						multicastChatSocket.send(dgpSend);
+					}catch(IOException ex){
+						ex.printStackTrace();
+					}			
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
 			}
 		});
 		btnJoinGroup.setBounds(356, 146, 120, 26);
 		getContentPane().add(btnJoinGroup);
-		
+
 		JButton btnLeaveGroup = new JButton("Leave");
 		btnLeaveGroup.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {				
+			public void actionPerformed(ActionEvent arg0) {
 				try {
 					multicastChatGroup = InetAddress.getByName(BROADCAST_ADDRESS);
 					try {
@@ -428,12 +435,13 @@ public class Group3 extends JFrame {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				} catch (UnknownHostException e) {
+				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
 				lblMessageBox.setText("Current Chat: None");								
+			
 			}
 		});
 		btnLeaveGroup.setBounds(484, 146, 120, 26);
@@ -464,7 +472,7 @@ public class Group3 extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				try{
 					String msg = txtMessage.getText();
-					msg = registeredName + ": " + msg;
+					msg = "Message|" + registeredName + ": " + msg;
 					byte[] buf = msg.getBytes();
 					
 					DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
@@ -533,8 +541,8 @@ public class Group3 extends JFrame {
 						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 						multicastBroadcastSocket.send(dgpSend);
 						
-						cobFriendList.addItem(personAdding);
 						friendList.add(message);
+						UpdateFriendList();
 						
 						if(friendList.isEmpty())
 						{
@@ -568,8 +576,8 @@ public class Group3 extends JFrame {
 			
 			if(receivedMessage.equals("FriendRequestAccepted"))
 			{
-				cobFriendList.addItem(message);
 				friendList.add(message);
+				UpdateFriendList();
 				
 				if(friendList.isEmpty())
 				{
@@ -603,14 +611,28 @@ public class Group3 extends JFrame {
 					int dialogResult = JOptionPane.showConfirmDialog(null, friendName + " would like you to join " + groupName + " chat group!", "Join Chat Group", dialogButton);
 					
 					if (dialogResult == 0) {
+						if(multicastChatGroup != null)
+						{
+							try{
+								String msg = txtMessage.getText();
+								msg = "LeftGroup|" + registeredName;
+								byte[] buf = msg.getBytes();
+								
+								DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+								multicastChatSocket.send(dgpSend);
+							}catch(IOException ex){
+								ex.printStackTrace();
+							}
+						}
+						
 						multicastChatGroup = InetAddress.getByName(groupIP);
 						multicastChatSocket = new MulticastSocket(PORT);
 						multicastChatSocket.joinGroup(multicastChatGroup);
 						
-						ownCreatedGroupList.add(groupName + "|" + groupIP);
-						cobGroupList.addItem(groupName);
-						
 						lblMessageBox.setText("Current Chat: " + groupName);
+						
+						groupList.add(groupName + "|" + groupIP);
+						UpdateGroupList();
 						
 						//Create a new thread to keep listening for packets from the group
 						new Thread(new Runnable(){
@@ -619,6 +641,18 @@ public class Group3 extends JFrame {
 								byte receiveBuf[] = new byte[1000];
 								DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
 								
+								try{
+									String whoIsThere = "WhoIsThere|"+registeredName;
+									byte[] buf = whoIsThere.getBytes();
+									
+									DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+									multicastChatSocket.send(dgpSend);
+								}catch(IOException ex){
+									ex.printStackTrace();
+								}
+								
+								groupFriendList.clear();
+								
 								while(true){
 									try{
 										multicastChatSocket.receive(dgpReceived);
@@ -626,7 +660,7 @@ public class Group3 extends JFrame {
 										int length = dgpReceived.getLength();
 										
 										String msg = new String(receivedData, 0, length);
-										taMessage.append(msg + "\n");
+										DoMessageAction(msg);
 									}catch(IOException ex){
 										ex.printStackTrace();
 									}
@@ -702,20 +736,106 @@ public class Group3 extends JFrame {
 	
 	public String GetGroupIP(String group)
 	{		
-		for(int i=0; i<ownCreatedGroupList.size(); i++)
+		for(int i=0; i<groupList.size(); i++)
 		{
-			String groupList = ownCreatedGroupList.get(i);
-			String groupName = groupList.substring(0, groupList.indexOf("|"));
+			String groupItem = groupList.get(i);
+			String groupName = groupItem.substring(0, groupItem.indexOf("|"));
 			
 			System.out.println(groupName);
 			
 			if(groupName.equals(group))
 			{
-				System.out.println(groupList.substring(groupList.indexOf("|")+1, groupList.length()));
-				return groupList.substring(groupList.indexOf("|")+1, groupList.length());
+				System.out.println("return IP:" + groupItem.substring(groupItem.indexOf("|")+1, groupItem.length()));
+				return groupItem.substring(groupItem.indexOf("|")+1, groupItem.length());
 			}
 		}
 		
 		return null;
+	}
+	
+	public void UpdateGroupList()
+	{
+		cobGroupList.removeAllItems();
+		
+		for(int i=0; i<groupList.size(); i++)
+		{
+			String group = groupList.get(i);
+			cobGroupList.addItem(group.substring(0, group.indexOf("|")));
+			System.out.println("Upddate : " + group.substring(0, group.indexOf("|")));
+		}
+	}
+	
+	public void UpdateFriendList()
+	{
+		cobFriendList.removeAllItems();
+		
+		for(int i=0; i<friendList.size(); i++)
+		{
+			cobFriendList.addItem(friendList.get(i));
+		}
+	}
+	
+	public void UpdateGroupFriendList()
+	{
+		taGroupFriendList.setText("");
+		
+		for(int i=0; i<groupFriendList.size(); i++)
+		{
+			taGroupFriendList.append(groupFriendList.get(i) + "\n");
+		}
+	}
+	
+	public void DoMessageAction(String message)
+	{
+		String action = message.substring(0, message.indexOf("|"));
+		message = message.substring(message.indexOf("|") + 1, message.length());
+		
+		if(action.equals("WhoIsThere") && (!message.equals(registeredName)))
+		{			
+			try{
+				String whoIsThere = message + "|WhoIsThereReply|" + registeredName;
+				byte[] buf = whoIsThere.getBytes();
+				
+				DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+				multicastChatSocket.send(dgpSend);
+			}catch(IOException ex){
+				ex.printStackTrace();
+			}
+			
+			groupFriendList.add(message);
+			UpdateGroupFriendList();
+		}
+		else if(action.equals(registeredName))
+		{
+			action = message.substring(0, message.indexOf("|"));
+			
+			if(action.equals("WhoIsThereReply"))
+			{
+				message = message.substring(message.indexOf("|") + 1, message.length());
+
+				System.out.println("Add Group List : " + message);
+
+				if(!message.equals(registeredName))
+				{
+					groupFriendList.add(message);
+				}
+
+				UpdateGroupFriendList();
+			}
+		}
+		else if(action.equals("LeftGroup"))
+		{
+			if(groupFriendList.contains(message))
+			{
+				groupFriendList.remove(message);
+				System.out.println("LeFT GROUP");
+			}
+			
+			UpdateGroupFriendList();
+		}
+		else if(action.equals("Message"))
+		{
+			taMessage.append(message + "\n");
+		}
 	}
 }
