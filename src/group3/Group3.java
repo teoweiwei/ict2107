@@ -28,6 +28,7 @@ import javax.swing.JComboBox;
 
 public class Group3 extends JFrame {
 	private static String BROADCAST_ADDRESS = "236.1.1.1";
+	private static String BROADCAST_ADDRESS_NO_GROUP = "236.1.2.1";
 	private static int PORT = 6789;
 	
 	//Multicast Broadcast Socket
@@ -444,7 +445,7 @@ public class Group3 extends JFrame {
 		btnLeaveGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
-					multicastChatGroup = InetAddress.getByName(BROADCAST_ADDRESS);
+					multicastChatGroup = InetAddress.getByName(BROADCAST_ADDRESS_NO_GROUP);
 					try {
 						multicastChatSocket = new MulticastSocket(PORT);
 						multicastChatSocket.joinGroup(multicastChatGroup);
@@ -457,6 +458,7 @@ public class Group3 extends JFrame {
 					e.printStackTrace();
 				}
 				taMessage.setText("");
+				taGroupFriendList.setText("");
 				lblMessageBox.setText("Current Chat: None");								
 			
 			}
