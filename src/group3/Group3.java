@@ -23,6 +23,7 @@ import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.awt.event.ActionEvent;
+import javax.swing.JComboBox;
 
 public class Group3 extends JFrame {
 	private static String BROADCAST_ADDRESS = "234.1.1.1";
@@ -56,9 +57,10 @@ public class Group3 extends JFrame {
 	private JTextField txtJoinGroup;
 	private JTextField txtMessage;
 	private JTextArea taFriendList;
-	private JTextArea taGroupList;
 	private JButton btnAddFriend;
 	private JButton btnDeleteFriend;
+	private JComboBox cobGroupList;
+	
 	/**
 	 * Launch the application.
 	 */
@@ -102,7 +104,7 @@ public class Group3 extends JFrame {
 		getContentPane().add(txtFriend);
 		// txtFriend.setColumns(10);
 
-		JLabel lblGroup = new JLabel("Group");
+		JLabel lblGroup = new JLabel("New Group");
 		lblGroup.setBounds(8, 100, 100, 26);
 		getContentPane().add(lblGroup);
 
@@ -286,13 +288,13 @@ public class Group3 extends JFrame {
 		btnAddFriend.setBounds(356, 54, 120, 26);
 		getContentPane().add(btnAddFriend);
 
-		JButton btnAddGroup = new JButton("Add");
+		JButton btnAddGroup = new JButton("Create");
 		btnAddGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String tentativeGroupName = txtGroup.getText();
-
-				if (GroupList.contains(tentativeGroupName)) {
-					taGroupList.setText(tentativeGroupName);
+				cobGroupList.addItem(tentativeGroupName);
+				/*if (GroupList.contains(tentativeGroupName)) {
+					cobGroupList.addItem(tentativeGroupName);
 					System.out.println(tentativeGroupName + " already in your group list|");
 				} else {
 					try {
@@ -305,49 +307,46 @@ public class Group3 extends JFrame {
 					} catch (IOException ex) {
 						ex.printStackTrace();
 					}
-				}
+				}*/
 			}
 		});
 		btnAddGroup.setBounds(356, 100, 120, 26);
 		getContentPane().add(btnAddGroup);
 
-		JButton btnEditGroup = new JButton("Edit");
-		btnEditGroup.setBounds(484, 100, 120, 26);
+		JButton btnEditGroup = new JButton("Add Friend");
+		btnEditGroup.setBounds(356, 146, 120, 26);
 		getContentPane().add(btnEditGroup);
 
 		JLabel lblFriendList = new JLabel("Friend List");
-		lblFriendList.setBounds(8, 150, 166, 26);
+		lblFriendList.setBounds(8, 200, 166, 26);
 		getContentPane().add(lblFriendList);
 
 		JLabel lblGroupList = new JLabel("Group List");
-		lblGroupList.setBounds(182, 150, 166, 26);
+		lblGroupList.setBounds(8, 146, 100, 26);
 		getContentPane().add(lblGroupList);
 
 		txtJoinGroup = new JTextField();
-		txtJoinGroup.setBounds(356, 150, 120, 26);
+		txtJoinGroup.setBounds(564, 8, 120, 26);
 		getContentPane().add(txtJoinGroup);
 
 		JButton btnJoinGroup = new JButton("Join");
-		btnJoinGroup.setBounds(484, 150, 120, 26);
+		btnJoinGroup.setBounds(484, 146, 120, 26);
 		getContentPane().add(btnJoinGroup);
 
 		JButton btnLeaveGroup = new JButton("Leave");
-		btnLeaveGroup.setBounds(612, 150, 120, 26);
+		btnLeaveGroup.setBounds(612, 146, 120, 26);
 		getContentPane().add(btnLeaveGroup);
 		
 		taFriendList = new JTextArea();
+		taFriendList.setEditable(false);
 		JScrollPane spFriendList = new JScrollPane(taFriendList);
-		spFriendList.setBounds(8, 184, 166, 300);
+		spFriendList.setBounds(8, 230, 166, 254);
 		getContentPane().add(spFriendList);
 
-		taGroupList = new JTextArea();
-		JScrollPane spGroupList = new JScrollPane(taGroupList);
-		spGroupList.setBounds(182, 184, 166, 300);
-		getContentPane().add(spGroupList);
-
 		JTextArea taMessage = new JTextArea();
+		taMessage.setEditable(false);
 		JScrollPane spMessage = new JScrollPane(taMessage);
-		spMessage.setBounds(356, 184, 376, 300);
+		spMessage.setBounds(182, 230, 550, 254);
 		getContentPane().add(spMessage);
 
 		JLabel lblMessge = new JLabel("Message");
@@ -361,6 +360,14 @@ public class Group3 extends JFrame {
 		JButton btnSend = new JButton("Leave");
 		btnSend.setBounds(612, 508, 120, 26);
 		getContentPane().add(btnSend);
+		
+		cobGroupList = new JComboBox();
+		cobGroupList.setBounds(108, 146, 240, 26);
+		getContentPane().add(cobGroupList);
+		
+		JLabel lblMessageBox = new JLabel("Message Box");
+		lblMessageBox.setBounds(182, 200, 550, 26);
+		getContentPane().add(lblMessageBox);
 
 	}
 
@@ -402,7 +409,7 @@ public class Group3 extends JFrame {
 						multicastBroadcastSocket.send(dgpSend);
 						
 						taFriendList.setText(taFriendList.getText() + personAdding + "\n");
-						friendList.add(personAdding);
+						friendList.add(message);
 						
 						if(friendList.isEmpty())
 						{
