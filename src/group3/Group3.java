@@ -870,6 +870,7 @@ public class Group3 extends JFrame {
 		else if(action.equals("Message"))
 		{
 			taMessage.append(message + "\n");
+			txtMessage.setText("");
 		}
 	}
 }
