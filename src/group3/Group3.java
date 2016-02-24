@@ -6,6 +6,7 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -15,6 +16,8 @@ import javax.swing.JTextArea;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.DatagramPacket;
@@ -110,7 +113,7 @@ public class Group3 extends JFrame {
 		btnAddFriend = new JButton("Add");
 		JButton btnAddGroup = new JButton("Create");
 		JButton btnAddGroupFriend = new JButton("Add Friend to Selected Group");
-		JLabel lblGroupFriendList = new JLabel("Group Friend List");
+		JLabel lblGroupFriendList = new JLabel("Current Chat Friend(s)");
 		JLabel lblGroupList = new JLabel("Group List");
 		JButton btnJoinGroup = new JButton("Join");
 		JButton btnLeaveGroup = new JButton("Leave");
@@ -235,10 +238,10 @@ public class Group3 extends JFrame {
 													// Dialogue alert
 													JOptionPane.showMessageDialog(null, txtGroup.getText() + " already exist");
 												}
-
 											} 
 											//This section run when chat group does not exist
 											catch (SocketTimeoutException ex) {
+												multicastBroadcastSocket.setSoTimeout(0);	//Clear timeout
 												String groupName = txtGroup.getText();
 												
 												//Generate a randomise IP address of a new chat group
@@ -247,11 +250,16 @@ public class Group3 extends JFrame {
 												System.out.println("New IP address: " + groupIP + " generated for group " + groupName);
 												
 												//Add group into own created list
-												ownCreatedGroupList.add(txtGroup.getText() + "|" + groupIP);
+												ownCreatedGroupList.add(groupName + "|" + groupIP);
 												
 												//Add group into current active group (To be display in the drop down list)
-												groupList.add(txtGroup.getText() + "|" + groupIP);
+												groupList.add(groupName + "|" + groupIP);
 												UpdateGroupList();	//Update group drop down list
+												
+												JOptionPane.showMessageDialog(null, groupName + " chat group has been successfully created!");
+												
+												/*//Send leaving message to inform other user
+												SendLeavingMessage();
 												
 												//Setup chat group multicast
 												multicastChatGroup = InetAddress.getByName(groupIP);
@@ -292,8 +300,22 @@ public class Group3 extends JFrame {
 														}
 													}).start();
 												}
-												
-												multicastBroadcastSocket.setSoTimeout(0);	//Clear timeout
+												else
+												{
+													groupFriendList.clear();	//Clear previous group chat friend list
+													UpdateGroupFriendList();
+													
+													try{
+														//Broadcast to know who are current online
+														String whoIsThere = "WhoIsThere|"+registeredName;
+														
+														byte[] buf = whoIsThere.getBytes();
+														DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+														multicastChatSocket.send(dgpSend);
+													}catch(IOException ex2){
+														ex2.printStackTrace();
+													}
+												}*/
 											}
 
 											broadcastCreateGroup = false;
@@ -400,7 +422,6 @@ public class Group3 extends JFrame {
 				} catch (IOException ex) {
 					ex.printStackTrace();
 				}
-				
 			}
 		});
 		
@@ -408,24 +429,8 @@ public class Group3 extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String groupName = cobGroupList.getSelectedItem().toString();
 				String groupIP = GetGroupIP(groupName);
-				taMessage.setText("");
-				if(multicastChatSocket != null)
-				{
-					try{
-						//Broadcast to current group chat member that user is leaving
-						String msg = txtMessage.getText();
-						msg = "LeftGroup|" + registeredName;
-						byte[] buf = msg.getBytes();
-						
-						DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
-						multicastChatSocket.send(dgpSend);
-						multicastChatSocket.leaveGroup(multicastChatGroup);
-						chatGroupThreadCreated = false;
-						System.out.println("Left to join another group");						
-					}catch(IOException ex){
-						ex.printStackTrace();
-					}
-				}
+				
+				SendLeavingMessage();
 				
 				try {
 					multicastChatGroup = InetAddress.getByName(groupIP);
@@ -433,20 +438,7 @@ public class Group3 extends JFrame {
 					multicastChatSocket.joinGroup(multicastChatGroup);
 
 					lblMessageBox.setText("Current Chat: " + groupName);
-					
-					/*groupFriendList.clear();	//Clear previous group chat friend list
-					
-					try{
-						//Broadcast to know who are current online
-						String whoIsThere = "WhoIsThere|"+registeredName;
-						
-						byte[] buf = whoIsThere.getBytes();
-						DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
-						multicastChatSocket.send(dgpSend);
-					}catch(IOException ex){
-						ex.printStackTrace();
-					}*/
-					
+										
 					if(!chatGroupThreadCreated)
 					{
 						//Create a new thread to keep listening for packets from the group
@@ -454,6 +446,10 @@ public class Group3 extends JFrame {
 							@Override
 							public void run(){
 								chatGroupThreadCreated = true;
+								
+								//Clear previous group friend list
+								groupFriendList.clear();
+								UpdateGroupFriendList();
 								
 								byte receiveBuf[] = new byte[1000];
 								DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
@@ -468,9 +464,6 @@ public class Group3 extends JFrame {
 								}catch(IOException ex){
 									ex.printStackTrace();
 								}
-								
-								//Clear previous group friend list
-								groupFriendList.clear();
 								
 								while(true){
 									try{
@@ -488,6 +481,40 @@ public class Group3 extends JFrame {
 							}
 						}).start();
 					}
+					else
+					{
+						groupFriendList.clear();	//Clear previous group chat friend list
+						UpdateGroupFriendList();
+						
+						try{
+							//Broadcast to know who are current online
+							String whoIsThere = "WhoIsThere|"+registeredName;
+							
+							byte[] buf = whoIsThere.getBytes();
+							DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+							multicastChatSocket.send(dgpSend);
+						}catch(IOException ex){
+							ex.printStackTrace();
+						}
+					}
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+
+		btnPrivateChat.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				String friendName = cobFriendList.getSelectedItem().toString();
+				String chatIP = GeneratePrivateChatIP();
+				
+				try {
+					//Send request to start a private chat with the select friend
+					String privateChatRequest = friendName + "|PrivateChatRequest|" + registeredName + "|" + chatIP;
+					byte[] sendBuf = privateChatRequest.getBytes();
+					DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+					multicastBroadcastSocket.send(dgpSend);
+					System.out.println("Request " + friendName +  " to start private chat at IP address" + chatIP);
 				} catch (IOException ex) {
 					ex.printStackTrace();
 				}
@@ -496,23 +523,11 @@ public class Group3 extends JFrame {
 
 		btnLeaveGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				try {
-					multicastChatGroup = InetAddress.getByName(BROADCAST_ADDRESS_NO_GROUP);
-					try {
-						multicastChatSocket = new MulticastSocket(PORT);
-						multicastChatSocket.joinGroup(multicastChatGroup);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				taMessage.setText("");
-				taGroupFriendList.setText("");
-				lblMessageBox.setText("Current Chat: None");								
-			
+				SendLeavingMessage();
+
+				groupFriendList.clear();
+				UpdateGroupFriendList();
+				lblMessageBox.setText("Current Chat: None");
 			}
 		});
 		
@@ -525,6 +540,7 @@ public class Group3 extends JFrame {
 					
 					DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
 					multicastChatSocket.send(dgpSend);
+					txtMessage.setText("");
 					System.out.println("Send test message: " + msg);
 				}catch(IOException ex){
 					ex.printStackTrace();
@@ -668,7 +684,7 @@ public class Group3 extends JFrame {
 			//When a friend request to join a group chat
 			else if(replyAction.equals("JoinGroupRequest"))
 			{
-				try {
+				//try {
 					int dialogButton = JOptionPane.YES_NO_OPTION;
 					String friendName = message.substring(0, message.indexOf("|"));
 					message = message.substring(message.indexOf("|") + 1, message.length());
@@ -679,30 +695,107 @@ public class Group3 extends JFrame {
 					int dialogResult = JOptionPane.showConfirmDialog(null, friendName + " would like you to join " + groupName + " chat group!", "Join Chat Group", dialogButton);
 					
 					if (dialogResult == 0) {
-						if(multicastChatGroup != null)
+						/*//Send leaving message to inform other user
+						SendLeavingMessage();
+						
+						multicastChatGroup = InetAddress.getByName(groupIP);
+						multicastChatSocket = new MulticastSocket(PORT);
+						multicastChatSocket.joinGroup(multicastChatGroup);
+						
+						lblMessageBox.setText("Current Chat: " + groupName + " Group Chat");*/
+						
+						//Add requested group into group list
+						groupList.add(groupName + "|" + groupIP);
+						UpdateGroupList();	//Update group drop down list
+						
+						/*if(!chatGroupThreadCreated)
 						{
-							//Broadcast to other member that user is leaving the current group chat
+							//Create a new thread to keep listening for packets from the group
+							new Thread(new Runnable(){
+								@Override
+								public void run(){
+									chatGroupThreadCreated = true;
+									
+									byte receiveBuf[] = new byte[1000];
+									DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
+									
+									//Broadcast to find who is currently online
+									try{
+										String whoIsThere = "WhoIsThere|"+registeredName;
+										byte[] buf = whoIsThere.getBytes();
+										
+										DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+										multicastChatSocket.send(dgpSend);
+									}catch(IOException ex){
+										ex.printStackTrace();
+									}
+									
+									//Clear previous group friend list
+									groupFriendList.clear();
+									
+									while(true){
+										try{
+											multicastChatSocket.receive(dgpReceived);
+											byte[] receivedData = dgpReceived.getData();
+											int length = dgpReceived.getLength();
+											String msg = new String(receivedData, 0, length);
+											
+											//Do necessary action
+											DoMessageAction(msg);
+										}catch(IOException ex){
+											ex.printStackTrace();
+										}
+									}
+								}
+							}).start();
+						}
+						else
+						{
+							//Clear previous group friend list
+							groupFriendList.clear();
+							
+							//Broadcast to find who is currently online
 							try{
-								String msg = txtMessage.getText();
-								msg = "LeftGroup|" + registeredName;
-								byte[] buf = msg.getBytes();
+								String whoIsThere = "WhoIsThere|"+registeredName;
+								byte[] buf = whoIsThere.getBytes();
 								
 								DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
 								multicastChatSocket.send(dgpSend);
 							}catch(IOException ex){
 								ex.printStackTrace();
 							}
-						}
+						}*/
+					}
+				/*} catch (IOException ex) {
+					ex.printStackTrace();
+				}*/
+			}
+			//Action for accepting a group chat
+			else if(replyAction.equals("PrivateChatRequest"))
+			{
+				try {
+					int dialogButton = JOptionPane.YES_NO_OPTION;
+					String friendName = message.substring(0, message.indexOf("|"));
+					message = message.substring(message.indexOf("|") + 1, message.length());
+					
+					int dialogResult = JOptionPane.showConfirmDialog(null, friendName + " would like to have a private chat with you now. Do you acccept?", "Private Chat Request", dialogButton);
+					
+					if (dialogResult == 0) {
+						SendLeavingMessage();
 						
-						multicastChatGroup = InetAddress.getByName(groupIP);
+						multicastChatGroup = InetAddress.getByName(message);
 						multicastChatSocket = new MulticastSocket(PORT);
 						multicastChatSocket.joinGroup(multicastChatGroup);
 						
-						lblMessageBox.setText("Current Chat: " + groupName);
+						lblMessageBox.setText("Current Chat: Private Chat with " + friendName);
+						groupFriendList.clear();
 						
-						//Add requested group into group list
-						groupList.add(groupName + "|" + groupIP);
-						UpdateGroupList();	//Update group drop down list
+						
+						//Reply friend that private chat is accepted
+						String replyPrivateChatRequest = friendName + "|PrivateChatAccepted|" + registeredName + "|" + message;
+						byte[] sendBuf = replyPrivateChatRequest.getBytes();
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+						multicastBroadcastSocket.send(dgpSend);
 						
 						if(!chatGroupThreadCreated)
 						{
@@ -745,6 +838,69 @@ public class Group3 extends JFrame {
 								}
 							}).start();
 						}
+					}
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
+			//Action for friend accepted private chat session
+			else if(replyAction.equals("PrivateChatAccepted"))
+			{
+				String friendName = message.substring(0, message.indexOf("|"));
+				message = message.substring(message.indexOf("|") + 1, message.length());
+				
+				try {
+					JOptionPane.showMessageDialog(null, friendName + " has accepted your private chat request!");
+					
+					//Send leaving message to inform other user
+					SendLeavingMessage();
+
+					multicastChatGroup = InetAddress.getByName(message);
+					multicastChatSocket = new MulticastSocket(PORT);
+					multicastChatSocket.joinGroup(multicastChatGroup);
+					
+					lblMessageBox.setText("Current Chat: Private chat with " + friendName);
+					
+					if(!chatGroupThreadCreated)
+					{
+						//Create a new thread to keep listening for packets from the group
+						new Thread(new Runnable(){
+							@Override
+							public void run(){
+								chatGroupThreadCreated = true;
+								
+								byte receiveBuf[] = new byte[1000];
+								DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
+								
+								//Broadcast to find who is currently online
+								try{
+									String whoIsThere = "WhoIsThere|"+registeredName;
+									byte[] buf = whoIsThere.getBytes();
+									
+									DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+									multicastChatSocket.send(dgpSend);
+								}catch(IOException ex){
+									ex.printStackTrace();
+								}
+								
+								//Clear previous group friend list
+								groupFriendList.clear();
+								
+								while(true){
+									try{
+										multicastChatSocket.receive(dgpReceived);
+										byte[] receivedData = dgpReceived.getData();
+										int length = dgpReceived.getLength();
+										String msg = new String(receivedData, 0, length);
+										
+										//Do necessary action
+										DoMessageAction(msg);
+									}catch(IOException ex){
+										ex.printStackTrace();
+									}
+								}
+							}
+						}).start();
 					}
 				} catch (IOException ex) {
 					ex.printStackTrace();
@@ -885,8 +1041,7 @@ public class Group3 extends JFrame {
 				multicastChatSocket.send(dgpSend);
 			}catch(IOException ex){
 				ex.printStackTrace();
-			}
-			
+			}			
 			
 			groupFriendList.add(message);	//Add requester user name
 			UpdateGroupFriendList();		//Update friend drop down list
@@ -925,7 +1080,38 @@ public class Group3 extends JFrame {
 		else if(action.equals("Message"))
 		{
 			taMessage.append(message + "\n");
-			txtMessage.setText("");
+		}
+	}
+	
+	//Generate a IP address for private chat
+	public String GeneratePrivateChatIP()
+	{
+		Random rand = new Random();
+		return "235.2" + "." + (rand.nextInt(254)+2) + "." + (rand.nextInt(254)+2);
+	}
+	
+	//Send leaving message to notify other user
+	public void SendLeavingMessage()
+	{
+		if(multicastChatGroup != null)
+		{
+			//Broadcast to other member that user is leaving the current group chat
+			try{
+				String msg = txtMessage.getText();
+				msg = "LeftGroup|" + registeredName;
+				byte[] buf = msg.getBytes();
+				
+				DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
+				multicastChatSocket.send(dgpSend);
+				
+				//Leave current multicast chat group
+				multicastChatSocket.leaveGroup(multicastChatGroup);
+				chatGroupThreadCreated = false;
+				taMessage.setText("");
+				System.out.println("Left to join another group");
+			}catch(IOException ex){
+				ex.printStackTrace();
+			}
 		}
 	}
 }
