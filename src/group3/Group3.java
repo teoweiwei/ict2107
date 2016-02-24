@@ -33,7 +33,7 @@ import java.awt.Color;
 
 public class Group3 extends JFrame {
 	private static String BROADCAST_ADDRESS = "235.1.1.1";
-	private static String BROADCAST_ADDRESS_NO_GROUP = "236.1.2.1";
+	private static String NO_GROUP = "235.1.1.2";
 	private static int PORT = 6789;
 	
 	//Multicast Broadcast Socket
@@ -265,7 +265,7 @@ public class Group3 extends JFrame {
 												
 												//Generate a randomise IP address of a new chat group
 												Random rand = new Random();
-												String groupIP = "235.1" + "." + (rand.nextInt(254)+2) + "." + (rand.nextInt(254)+2);
+												String groupIP = "235.1" + "." + (rand.nextInt(254)+1) + "." + (rand.nextInt(254)+3);
 												System.out.println("New IP address: " + groupIP + " generated for group " + groupName);
 												
 												//Add group into own created list
@@ -487,6 +487,13 @@ public class Group3 extends JFrame {
 		btnLeaveGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				SendLeavingMessage();
+				try{
+					multicastChatGroup = InetAddress.getByName(NO_GROUP);
+					multicastChatSocket = new MulticastSocket(PORT);
+					multicastChatSocket.joinGroup(multicastChatGroup);;
+				}catch(IOException ex){
+					ex.printStackTrace();
+				}
 
 				groupFriendList.clear();
 				UpdateGroupFriendList();
