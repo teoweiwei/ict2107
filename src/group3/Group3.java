@@ -310,27 +310,30 @@ public class Group3 extends JFrame {
 		
 		btnAddFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String tentativeFriendName = txtFriend.getText();
-
-				if (friendList.contains(tentativeFriendName)) {
-					JOptionPane.showMessageDialog(null, tentativeFriendName + " is already your friend.");
-					lblStatus.setText(tentativeFriendName + " is already your friend");
-				} 
-				else if(tentativeFriendName.equals(registeredName))
-				{
-					JOptionPane.showMessageDialog(null, tentativeFriendName + " is your own name.");
-					lblStatus.setText(tentativeFriendName + " is your own name");
-				}
-				else {
-					try {
-						//Send friend Request
-						String friendName = "CheckFriendName|" + tentativeFriendName + "|" + registeredName;
-						byte[] sendBuf = friendName.getBytes();
-						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
-						multicastBroadcastSocket.send(dgpSend);
-						txtFriend.setText("");
-					} catch (IOException ex) {
-						ex.printStackTrace();
+				String tentativeFriendName = txtFriend.getText().trim();
+				if(tentativeFriendName.equals("")){
+					JOptionPane.showMessageDialog(null, "Please enter a name!");
+				}else{	
+					if (friendList.contains(tentativeFriendName)) {
+						JOptionPane.showMessageDialog(null, tentativeFriendName + " is already your friend.");
+						lblStatus.setText(tentativeFriendName + " is already your friend");
+					} 
+					else if(tentativeFriendName.equals(registeredName))
+					{
+						JOptionPane.showMessageDialog(null, tentativeFriendName + " is your own name.");
+						lblStatus.setText(tentativeFriendName + " is your own name");
+					}
+					else {
+						try {
+							//Send friend Request
+							String friendName = "CheckFriendName|" + tentativeFriendName + "|" + registeredName;
+							byte[] sendBuf = friendName.getBytes();
+							DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+							multicastBroadcastSocket.send(dgpSend);
+							txtFriend.setText("");
+						} catch (IOException ex) {
+							ex.printStackTrace();
+						}
 					}
 				}
 			}
@@ -338,23 +341,27 @@ public class Group3 extends JFrame {
 		
 		btnDeleteFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (friendList.contains(txtFriend.getText())) {
-					//Remove friend from friend list
-					friendList.remove(txtFriend.getText());
-					UpdateFriendList();
-					JOptionPane.showMessageDialog(null, txtFriend.getText() + " has been removed");
-					lblStatus.setText(txtFriend.getText() + " has been removed from your friend list");
-					
-					if (friendList.isEmpty()) {
-						btnDeleteFriend.setEnabled(false);
+				if(txtFriend.getText().trim().equals("")){					
+						JOptionPane.showMessageDialog(null, "Please enter a name!");
+				}else{						
+						if (friendList.contains(txtFriend.getText())) {
+							//Remove friend from friend list
+							friendList.remove(txtFriend.getText());
+							UpdateFriendList();
+							JOptionPane.showMessageDialog(null, txtFriend.getText() + " has been removed");
+							lblStatus.setText(txtFriend.getText() + " has been removed from your friend list");
+							
+							if (friendList.isEmpty()) {
+								btnDeleteFriend.setEnabled(false);
+							}
+							
+							txtFriend.setText("");
+						} else {
+							JOptionPane.showMessageDialog(null, txtFriend.getText() + " doesnt exists in your friend list!");
+							lblStatus.setText(txtFriend.getText() + " doesnt exists in your friend list");
+							txtFriend.setText("");
+						}
 					}
-					
-					txtFriend.setText("");
-				} else {
-					JOptionPane.showMessageDialog(null, txtFriend.getText() + " doesnt exists in your friend list!");
-					lblStatus.setText(txtFriend.getText() + " doesnt exists in your friend list");
-					txtFriend.setText("");
-				}
 			}
 		});
 
