@@ -173,133 +173,137 @@ public class Group3 extends JFrame {
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				lblStatus.setText("Registering user name. Please wait");
-				String tentativeName = txtUserName.getText();
-
-				try {
-					//Broadcast tentative user name to check any other user has the same name
-					String userName = "CheckRegisterName|" + tentativeName;
-					byte[] sendBuf = userName.getBytes();
-					DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
-					multicastBroadcastSocket.send(dgpSend);
-					System.out.println("Send: CheckRegisterName|" + tentativeName);
+				String tentativeName = txtUserName.getText().trim();
+				if(tentativeName.equals("")){
+					JOptionPane.showMessageDialog(null, "Please enter a name");
 					
-					byte receiveBuf[] = new byte[1000];
-					DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
-					multicastBroadcastSocket.receive(dgpReceived);	//Discard own broadcast message
-
-					multicastBroadcastSocket.setSoTimeout(3000);	//Set timeout to 3 seconds
-					//This section run when there is a similar user name
+				}else{
 					try {
-						System.out.println("Awaiting for user name reply");
-						multicastBroadcastSocket.receive(dgpReceived);
-						multicastBroadcastSocket.setSoTimeout(0);	//Clear timeout
+						//Broadcast tentative user name to check any other user has the same name
+						String userName = "CheckRegisterName|" + tentativeName;
+						byte[] sendBuf = userName.getBytes();
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+						multicastBroadcastSocket.send(dgpSend);
+						System.out.println("Send: CheckRegisterName|" + tentativeName);
 						
-						//Receive reply 
-						byte[] receivedData = dgpReceived.getData();
-						int length = dgpReceived.getLength();
-						String receivedMessage = new String(receivedData, 0, length);
-						System.out.println("Receive Message: " + receivedMessage);
-						
-						if (receivedMessage.equals("NameTaken|")) {
-							JOptionPane.showMessageDialog(null, tentativeName + " is already taken!");
-							lblStatus.setText(tentativeName + " is already taken!");
-						}
-					} 
-					//This section run when user name does not exist
-					catch (SocketTimeoutException ex) {
-						multicastBroadcastSocket.setSoTimeout(0);
-												
-						registeredName = tentativeName;		//Set user name
-						JOptionPane.showMessageDialog(null, registeredName + ", you have been successfully registered!");
-						lblStatus.setText(registeredName + ", you have been successfully registered!");
-						
-						btnRegister.setVisible(false);
-						txtUserName.setEditable(false);
-						btnDeleteFriend.setEnabled(true);
-						taGroupFriendList.setEditable(true);
-						taMessage.setEditable(true);
-						btnAddGroup.setEnabled(true);
-						btnAddGroupFriend.setEnabled(true);
-						btnJoinGroup.setEnabled(true);
-						btnLeaveGroup.setEnabled(true);
-						btnSend.setEnabled(true);
-						btnPrivateChat.setEnabled(true);
-						btnAddFriend.setEnabled(true);
-						
-						//Run thread to listen broadcast group message
-						new Thread(new Runnable() {
-							@Override
-							public void run() {
-								
-								while (true) {
-									byte receiveBuf[] = new byte[1000];
-									DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
-
-									try {
-										System.out.println("Listening to broadcast group...");
-										multicastBroadcastSocket.receive(dgpReceived);
-										
-										//This condition run when user is creating a new chat group
-										if (broadcastCreateGroup) {
-											multicastBroadcastSocket.setSoTimeout(3000);
+						byte receiveBuf[] = new byte[1000];
+						DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
+						multicastBroadcastSocket.receive(dgpReceived);	//Discard own broadcast message
+	
+						multicastBroadcastSocket.setSoTimeout(3000);	//Set timeout to 3 seconds
+						//This section run when there is a similar user name
+						try {
+							System.out.println("Awaiting for user name reply");
+							multicastBroadcastSocket.receive(dgpReceived);
+							multicastBroadcastSocket.setSoTimeout(0);	//Clear timeout
+							
+							//Receive reply 
+							byte[] receivedData = dgpReceived.getData();
+							int length = dgpReceived.getLength();
+							String receivedMessage = new String(receivedData, 0, length);
+							System.out.println("Receive Message: " + receivedMessage);
+							
+							if (receivedMessage.equals("NameTaken|")) {
+								JOptionPane.showMessageDialog(null, tentativeName + " is already taken!");
+								lblStatus.setText(tentativeName + " is already taken!");
+							}
+						} 
+						//This section run when user name does not exist
+						catch (SocketTimeoutException ex) {
+							multicastBroadcastSocket.setSoTimeout(0);
+													
+							registeredName = tentativeName;		//Set user name
+							JOptionPane.showMessageDialog(null, registeredName + ", you have been successfully registered!");
+							lblStatus.setText(registeredName + ", you have been successfully registered!");
+							
+							btnRegister.setVisible(false);
+							txtUserName.setEditable(false);
+							btnDeleteFriend.setEnabled(true);
+							taGroupFriendList.setEditable(true);
+							taMessage.setEditable(true);
+							btnAddGroup.setEnabled(true);
+							btnAddGroupFriend.setEnabled(true);
+							btnJoinGroup.setEnabled(true);
+							btnLeaveGroup.setEnabled(true);
+							btnSend.setEnabled(true);
+							btnPrivateChat.setEnabled(true);
+							btnAddFriend.setEnabled(true);
+							
+							//Run thread to listen broadcast group message
+							new Thread(new Runnable() {
+								@Override
+								public void run() {
+									
+									while (true) {
+										byte receiveBuf[] = new byte[1000];
+										DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
+	
+										try {
+											System.out.println("Listening to broadcast group...");
+											multicastBroadcastSocket.receive(dgpReceived);
 											
-											//This section run when chat group already exist
-											try {
-												multicastBroadcastSocket.receive(dgpReceived);
-												multicastBroadcastSocket.setSoTimeout(0);
-
+											//This condition run when user is creating a new chat group
+											if (broadcastCreateGroup) {
+												multicastBroadcastSocket.setSoTimeout(3000);
+												
+												//This section run when chat group already exist
+												try {
+													multicastBroadcastSocket.receive(dgpReceived);
+													multicastBroadcastSocket.setSoTimeout(0);
+	
+													byte[] receivedData = dgpReceived.getData();
+													int length = dgpReceived.getLength();
+													String receivedMessage = new String(receivedData, 0, length);
+	
+													if (receivedMessage.equals("GroupExists|")) {
+														// Dialogue alert
+														JOptionPane.showMessageDialog(null, txtGroup.getText() + " already exists");
+														lblStatus.setText(txtGroup.getText() + " already exists");
+													}
+												} 
+												//This section run when chat group does not exist
+												catch (SocketTimeoutException ex) {
+													multicastBroadcastSocket.setSoTimeout(0);	//Clear timeout
+													String groupName = txtGroup.getText();
+													
+													//Generate a randomise IP address of a new chat group
+													Random rand = new Random();
+													String groupIP = "235.1" + "." + (rand.nextInt(254)+1) + "." + (rand.nextInt(254)+3);
+													System.out.println("New IP address: " + groupIP + " generated for group " + groupName);
+													
+													//Add group into own created list
+													ownCreatedGroupList.add(groupName + "|" + groupIP);
+													
+													//Add group into current active group (To be display in the drop down list)
+													groupList.add(groupName + "|" + groupIP);
+													UpdateGroupList();	//Update group drop down list
+													
+													JOptionPane.showMessageDialog(null, groupName + " chat group has been successfully created!");
+													lblStatus.setText(groupName + " chat group has been successfully created!");
+												}
+	
+												broadcastCreateGroup = false;
+											}
+											else {
 												byte[] receivedData = dgpReceived.getData();
 												int length = dgpReceived.getLength();
-												String receivedMessage = new String(receivedData, 0, length);
-
-												if (receivedMessage.equals("GroupExists|")) {
-													// Dialogue alert
-													JOptionPane.showMessageDialog(null, txtGroup.getText() + " already exists");
-													lblStatus.setText(txtGroup.getText() + " already exists");
-												}
-											} 
-											//This section run when chat group does not exist
-											catch (SocketTimeoutException ex) {
-												multicastBroadcastSocket.setSoTimeout(0);	//Clear timeout
-												String groupName = txtGroup.getText();
+												String message = new String(receivedData, 0, length);
+												System.out.println("Received broadcast message: " + message);
 												
-												//Generate a randomise IP address of a new chat group
-												Random rand = new Random();
-												String groupIP = "235.1" + "." + (rand.nextInt(254)+1) + "." + (rand.nextInt(254)+3);
-												System.out.println("New IP address: " + groupIP + " generated for group " + groupName);
-												
-												//Add group into own created list
-												ownCreatedGroupList.add(groupName + "|" + groupIP);
-												
-												//Add group into current active group (To be display in the drop down list)
-												groupList.add(groupName + "|" + groupIP);
-												UpdateGroupList();	//Update group drop down list
-												
-												JOptionPane.showMessageDialog(null, groupName + " chat group has been successfully created!");
-												lblStatus.setText(groupName + " chat group has been successfully created!");
+												//Do necessary message action in DoMessageAction()
+												DoAction(message);
 											}
-
-											broadcastCreateGroup = false;
+										} catch (IOException ex) {
+											ex.printStackTrace();
 										}
-										else {
-											byte[] receivedData = dgpReceived.getData();
-											int length = dgpReceived.getLength();
-											String message = new String(receivedData, 0, length);
-											System.out.println("Received broadcast message: " + message);
-											
-											//Do necessary message action in DoMessageAction()
-											DoAction(message);
-										}
-									} catch (IOException ex) {
-										ex.printStackTrace();
 									}
 								}
-							}
-						}).start();
+							}).start();
+						}
+	
+					} catch (IOException ex) {
+						ex.printStackTrace();
 					}
-
-				} catch (IOException ex) {
-					ex.printStackTrace();
 				}
 			}
 		});
@@ -356,23 +360,26 @@ public class Group3 extends JFrame {
 
 		btnAddGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String tentativeGroupName = txtGroup.getText();
-				
-				if (CheckGroupListExist(tentativeGroupName)) {
-					JOptionPane.showMessageDialog(null, tentativeGroupName + " group already exist");
-					lblStatus.setText(tentativeGroupName + " group already exist");
-				} else {
-					try {
-						//Broadcast group name to check any other group of similar name
-						broadcastCreateGroup = true;
-						chatGroupThreadCreated = false;
-						String checkGroupName = "CheckCreateGroupName|" + tentativeGroupName;
-						byte[] sendBuf = checkGroupName.getBytes();
-						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
-						multicastBroadcastSocket.send(dgpSend);
-						System.out.println("Check for chat group: " + checkGroupName);
-					} catch (IOException ex) {
-						ex.printStackTrace();
+				String tentativeGroupName = txtGroup.getText().trim();
+				if (tentativeGroupName.equals("")){
+					JOptionPane.showMessageDialog(null, "Please enter a name! ");
+				}else{
+					if (CheckGroupListExist(tentativeGroupName)) {
+						JOptionPane.showMessageDialog(null, tentativeGroupName + " group already exist");
+						lblStatus.setText(tentativeGroupName + " group already exist");
+					} else {
+						try {
+							//Broadcast group name to check any other group of similar name
+							broadcastCreateGroup = true;
+							chatGroupThreadCreated = false;
+							String checkGroupName = "CheckCreateGroupName|" + tentativeGroupName;
+							byte[] sendBuf = checkGroupName.getBytes();
+							DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+							multicastBroadcastSocket.send(dgpSend);
+							System.out.println("Check for chat group: " + checkGroupName);
+						} catch (IOException ex) {
+							ex.printStackTrace();
+						}
 					}
 				}
 			}
