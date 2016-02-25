@@ -66,6 +66,7 @@ public class Group3 extends JFrame {
 	private JTextArea taMessage;
 	private JLabel lblMessageBox;
 	private JLabel lblStatus;
+	private JButton btnPrivateChat;
 	
 	/**
 	 * Launch the application.
@@ -128,7 +129,7 @@ public class Group3 extends JFrame {
 		lblMessageBox = new JLabel("Current Chat: None");
 		JLabel lblFriendList = new JLabel("Friend List");
 		cobFriendList = new JComboBox();
-		JButton btnPrivateChat = new JButton("Private Chat");
+		btnPrivateChat = new JButton("Private Chat");
 		lblStatus = new JLabel("Please enter a user name to start");
 		
 		lblUserName.setBounds(8, 8, 100, 26);
@@ -170,6 +171,7 @@ public class Group3 extends JFrame {
 		btnAddFriend.setEnabled(false);
 		lblStatus.setFont(new Font("Tahoma", Font.BOLD, 16));
 
+		
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				lblStatus.setText("Registering user name. Please wait");
@@ -218,7 +220,7 @@ public class Group3 extends JFrame {
 							
 							btnRegister.setVisible(false);
 							txtUserName.setEditable(false);
-							btnDeleteFriend.setEnabled(true);
+//							btnDeleteFriend.setEnabled(true);
 							taGroupFriendList.setEditable(true);
 							taMessage.setEditable(true);
 							btnAddGroup.setEnabled(true);
@@ -226,7 +228,7 @@ public class Group3 extends JFrame {
 							btnJoinGroup.setEnabled(true);
 							btnLeaveGroup.setEnabled(true);
 							btnSend.setEnabled(true);
-							btnPrivateChat.setEnabled(true);
+							//btnPrivateChat.setEnabled(true);
 							btnAddFriend.setEnabled(true);
 							
 							//Run thread to listen broadcast group message
@@ -292,6 +294,7 @@ public class Group3 extends JFrame {
 												
 												//Do necessary message action in DoMessageAction()
 												DoAction(message);
+												
 											}
 										} catch (IOException ex) {
 											ex.printStackTrace();
@@ -325,6 +328,7 @@ public class Group3 extends JFrame {
 					}
 					else {
 						try {
+							
 							//Send friend Request
 							String friendName = "CheckFriendName|" + tentativeFriendName + "|" + registeredName;
 							byte[] sendBuf = friendName.getBytes();
@@ -350,6 +354,7 @@ public class Group3 extends JFrame {
 							UpdateFriendList();
 							JOptionPane.showMessageDialog(null, txtFriend.getText() + " has been removed");
 							lblStatus.setText(txtFriend.getText() + " has been removed from your friend list");
+							btnPrivateChat.setEnabled(false);
 							
 							if (friendList.isEmpty()) {
 								btnDeleteFriend.setEnabled(false);
@@ -488,19 +493,23 @@ public class Group3 extends JFrame {
 
 		btnPrivateChat.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				
 				String friendName = cobFriendList.getSelectedItem().toString();
 				String chatIP = GeneratePrivateChatIP();
+					
 				
-				try {
-					//Send request to start a private chat with the select friend
-					String privateChatRequest = friendName + "|PrivateChatRequest|" + registeredName + "|" + chatIP;
-					byte[] sendBuf = privateChatRequest.getBytes();
-					DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
-					multicastBroadcastSocket.send(dgpSend);
-					System.out.println("Request " + friendName +  " to start private chat at IP address" + chatIP);
-				} catch (IOException ex) {
-					ex.printStackTrace();
-				}
+					try {
+						//Send request to start a private chat with the select friend
+						String privateChatRequest = friendName + "|PrivateChatRequest|" + registeredName + "|" + chatIP;
+						byte[] sendBuf = privateChatRequest.getBytes();
+						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
+						multicastBroadcastSocket.send(dgpSend);
+						System.out.println("Request " + friendName +  " to start private chat at IP address" + chatIP);
+					} catch (IOException ex) {
+											
+						ex.printStackTrace();
+					}
+				
 			}
 		});
 
@@ -596,12 +605,12 @@ public class Group3 extends JFrame {
 			message = message.substring(message.indexOf("|") + 1, message.length());
 			
 			//Condition run will requested name in this user
-			if (nameToCheck.equals(registeredName)) {
+			if (nameToCheck.equals(registeredName)) {			
 				try {
 					int dialogButton = JOptionPane.YES_NO_OPTION;
 					
 					//Dialog to accept or reject friend request
-					int dialogResult = JOptionPane.showConfirmDialog(null, message + " would like to add you", "Friend Request", dialogButton);
+					int dialogResult = JOptionPane.showConfirmDialog(null, message + " would hello like to add you", "Friend Request", dialogButton);
 					
 					//Respond when accept friend request
 					if (dialogResult == 0) {
@@ -610,13 +619,16 @@ public class Group3 extends JFrame {
 						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 						multicastBroadcastSocket.send(dgpSend);
 						
+						
 						friendList.add(message);	//Add to friend list
 						UpdateFriendList();			//Update friend drop down list
 						
 						if(friendList.isEmpty()) {
 							btnDeleteFriend.setEnabled(false);
+							
 						} else {
 							btnDeleteFriend.setEnabled(true);
+							btnPrivateChat.setEnabled(true);
 						}
 						
 						System.out.println("Accept friend request: " + sendMessage);
@@ -635,8 +647,6 @@ public class Group3 extends JFrame {
 				} catch (IOException ex) {
 					ex.printStackTrace();
 				}
-			}else{
-				JOptionPane.showMessageDialog(null, nameToCheck + " does not exist");
 			}
 		} 
 		//Action when receive request reply
@@ -654,10 +664,12 @@ public class Group3 extends JFrame {
 				if(friendList.isEmpty())
 				{
 					btnDeleteFriend.setEnabled(false);
+					btnPrivateChat.setEnabled(false);
 				}
 				else
 				{
 					btnDeleteFriend.setEnabled(true);
+					btnPrivateChat.setEnabled(true);
 				}
 				
 				JOptionPane.showMessageDialog(null, message + " accepted your friend request");
