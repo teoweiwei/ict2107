@@ -621,6 +621,8 @@ public class Group3 extends JFrame {
 				} catch (IOException ex) {
 					ex.printStackTrace();
 				}
+			}else{
+				JOptionPane.showMessageDialog(null, nameToCheck + " does not exist");
 			}
 		} 
 		//Action when receive request reply
