@@ -32,7 +32,7 @@ import java.awt.Font;
 import java.awt.Color;
 
 public class Group3 extends JFrame {
-	private static String BROADCAST_ADDRESS = "235.1.1.1";
+	private static String BROADCAST_ADDRESS = "236.1.1.1";
 	private static String NO_GROUP = "235.1.1.2";
 	private static int PORT = 6789;
 	
@@ -61,6 +61,9 @@ public class Group3 extends JFrame {
 	private JTextArea taGroupFriendList;
 	private JButton btnAddFriend;
 	private JButton btnDeleteFriend;
+	private JButton btnAddGroupFriend;
+	private JButton btnJoinGroup;
+	private JButton btnLeaveGroup;
 	private JComboBox cobGroupList;
 	private JComboBox cobFriendList;
 	private JTextArea taMessage;
@@ -113,11 +116,11 @@ public class Group3 extends JFrame {
 		JButton btnRegister = new JButton("Register");
 		btnAddFriend = new JButton("Add");
 		JButton btnAddGroup = new JButton("Create");
-		JButton btnAddGroupFriend = new JButton("Add Friend to Selected Group");
+		btnAddGroupFriend = new JButton("Add Friend to Selected Group");
 		JLabel lblGroupFriendList = new JLabel("Current Chat Friend(s)");
 		JLabel lblGroupList = new JLabel("Group List");
-		JButton btnJoinGroup = new JButton("Join");
-		JButton btnLeaveGroup = new JButton("Leave");
+		btnJoinGroup = new JButton("Join");
+		btnLeaveGroup = new JButton("Leave");
 		taGroupFriendList = new JTextArea();
 		JScrollPane spFriendList = new JScrollPane(taGroupFriendList);
 		taMessage = new JTextArea();
@@ -220,15 +223,10 @@ public class Group3 extends JFrame {
 							
 							btnRegister.setVisible(false);
 							txtUserName.setEditable(false);
-//							btnDeleteFriend.setEnabled(true);
 							taGroupFriendList.setEditable(true);
 							taMessage.setEditable(true);
 							btnAddGroup.setEnabled(true);
-							btnAddGroupFriend.setEnabled(true);
-							btnJoinGroup.setEnabled(true);
-							btnLeaveGroup.setEnabled(true);
 							btnSend.setEnabled(true);
-							//btnPrivateChat.setEnabled(true);
 							btnAddFriend.setEnabled(true);
 							
 							//Run thread to listen broadcast group message
@@ -281,6 +279,8 @@ public class Group3 extends JFrame {
 													UpdateGroupList();	//Update group drop down list
 													
 													JOptionPane.showMessageDialog(null, groupName + " chat group has been successfully created!");
+													btnJoinGroup.setEnabled(true);
+													btnLeaveGroup.setEnabled(true);
 													lblStatus.setText(groupName + " chat group has been successfully created!");
 												}
 	
@@ -354,10 +354,11 @@ public class Group3 extends JFrame {
 							UpdateFriendList();
 							JOptionPane.showMessageDialog(null, txtFriend.getText() + " has been removed");
 							lblStatus.setText(txtFriend.getText() + " has been removed from your friend list");
-							btnPrivateChat.setEnabled(false);
 							
 							if (friendList.isEmpty()) {
 								btnDeleteFriend.setEnabled(false);
+								btnAddGroupFriend.setEnabled(false);
+								btnPrivateChat.setEnabled(false);
 							}
 							
 							txtFriend.setText("");
@@ -389,6 +390,7 @@ public class Group3 extends JFrame {
 							DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 							multicastBroadcastSocket.send(dgpSend);
 							System.out.println("Check for chat group: " + checkGroupName);
+							lblStatus.setText("Creating new chat group. Please Wait...");
 						} catch (IOException ex) {
 							ex.printStackTrace();
 						}
@@ -452,6 +454,7 @@ public class Group3 extends JFrame {
 									
 									DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
 									multicastChatSocket.send(dgpSend);
+									lblStatus.setText("You have joined " + groupName + " chat group");
 								}catch(IOException ex){
 									ex.printStackTrace();
 								}
@@ -481,6 +484,7 @@ public class Group3 extends JFrame {
 							byte[] buf = whoIsThere.getBytes();
 							DatagramPacket dgpSend = new DatagramPacket(buf, buf.length, multicastChatGroup, PORT);
 							multicastChatSocket.send(dgpSend);
+							lblStatus.setText("You have joined " + groupName + " chat group");
 						}catch(IOException ex){
 							ex.printStackTrace();
 						}
@@ -524,10 +528,11 @@ public class Group3 extends JFrame {
 				}catch(IOException ex){
 					ex.printStackTrace();
 				}
-
+				
 				groupFriendList.clear();
 				UpdateGroupFriendList();
 				lblMessageBox.setText("Current Chat: None");
+				lblStatus.setText("You have left previous chat");
 			}
 		});
 		
@@ -625,10 +630,19 @@ public class Group3 extends JFrame {
 						
 						if(friendList.isEmpty()) {
 							btnDeleteFriend.setEnabled(false);
-							
+							btnPrivateChat.setEnabled(false);
 						} else {
 							btnDeleteFriend.setEnabled(true);
 							btnPrivateChat.setEnabled(true);
+						}
+						
+						if(groupList.isEmpty())
+						{
+							btnAddGroupFriend.setEnabled(false);
+						}
+						else
+						{
+							btnAddGroupFriend.setEnabled(true);
 						}
 						
 						System.out.println("Accept friend request: " + sendMessage);
@@ -672,6 +686,15 @@ public class Group3 extends JFrame {
 					btnPrivateChat.setEnabled(true);
 				}
 				
+				if(groupList.isEmpty())
+				{
+					btnAddGroupFriend.setEnabled(false);
+				}
+				else
+				{
+					btnAddGroupFriend.setEnabled(true);
+				}
+				
 				JOptionPane.showMessageDialog(null, message + " accepted your friend request");
 			}
 			//When friend request is rejected
@@ -700,6 +723,10 @@ public class Group3 extends JFrame {
 					if (dialogResult == 0) {
 						groupList.add(groupName + "|" + groupIP);
 						UpdateGroupList();	//Update group drop down list
+						btnJoinGroup.setEnabled(true);
+						btnLeaveGroup.setEnabled(true);
+						btnAddGroupFriend.setEnabled(true);
+						lblStatus.setText(groupName + " chat group has beed added to your group chat list!");
 					}
 			}
 			//Action for accepting a group chat
