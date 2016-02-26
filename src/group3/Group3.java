@@ -32,7 +32,7 @@ import java.awt.Font;
 import java.awt.Color;
 
 public class Group3 extends JFrame {
-	private static String BROADCAST_ADDRESS = "236.1.1.1";
+	private static String BROADCAST_ADDRESS = "235.1.1.1";
 	private static String NO_GROUP = "235.1.1.2";
 	private static int PORT = 6789;
 	
