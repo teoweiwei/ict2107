@@ -695,7 +695,7 @@ public class Group3 extends JFrame {
 					int dialogButton = JOptionPane.YES_NO_OPTION;
 
 					// Dialog to accept or reject friend request
-					int dialogResult = JOptionPane.showConfirmDialog(null, message + " would hello like to add you",
+					int dialogResult = JOptionPane.showConfirmDialog(null, message + " would like to add you",
 							"Friend Request", dialogButton);
 
 					// Respond when accept friend request
