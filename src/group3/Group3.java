@@ -46,14 +46,15 @@ public class Group3 extends JFrame {
 
 	String registeredName = "";		//Registered User Name
 
-	ArrayList<String> friendList = new ArrayList();				//List of friends added my user
-	ArrayList<String> groupFriendList = new ArrayList();		//List of friends within a group chat
-	ArrayList<String> ownCreatedGroupList = new ArrayList();	//List of group create by user
-	ArrayList<String> groupList = new ArrayList();				//List of group added by user (Inclusive of own created)
+	ArrayList<String> friendList = new ArrayList();				//List of friends added by user
+	ArrayList<String> groupFriendList = new ArrayList();		//List of friends within the current group chat (Who is currently online)
+	ArrayList<String> ownCreatedGroupList = new ArrayList();	//List of chat group created by this user
+	ArrayList<String> groupList = new ArrayList();				//List of group added by user (Inclusive of own created groups)
 
-	boolean broadcastCreateGroup = false;
-	boolean chatGroupThreadCreated = false;
+	boolean broadcastCreateGroup = false;		//Use while in the process of creating a new chat group
+	boolean chatGroupThreadCreated = false;		//Use to check whether any chat group thread is created
 	
+	//UI component
 	private JTextField txtUserName;
 	private JTextField txtFriend;
 	private JTextField txtGroup;
@@ -174,11 +175,13 @@ public class Group3 extends JFrame {
 		btnAddFriend.setEnabled(false);
 		lblStatus.setFont(new Font("Tahoma", Font.BOLD, 16));
 
-		
+		//Registration button
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				lblStatus.setText("Registering user name. Please wait");
 				String tentativeName = txtUserName.getText().trim();
+				
+				//Check for empty input
 				if(tentativeName.equals("")){
 					JOptionPane.showMessageDialog(null, "Please enter a name");
 					
@@ -195,7 +198,7 @@ public class Group3 extends JFrame {
 						DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
 						multicastBroadcastSocket.receive(dgpReceived);	//Discard own broadcast message
 	
-						multicastBroadcastSocket.setSoTimeout(3000);	//Set timeout to 3 seconds
+						multicastBroadcastSocket.setSoTimeout(3000);	//Set timeout to 3 seconds, so program will not stuck waiting for reply
 						//This section run when there is a similar user name
 						try {
 							System.out.println("Awaiting for user name reply");
@@ -208,6 +211,7 @@ public class Group3 extends JFrame {
 							String receivedMessage = new String(receivedData, 0, length);
 							System.out.println("Receive Message: " + receivedMessage);
 							
+							//Display dialog when user name is taken
 							if (receivedMessage.equals("NameTaken|")) {
 								JOptionPane.showMessageDialog(null, tentativeName + " is already taken!");
 								lblStatus.setText(tentativeName + " is already taken!");
@@ -216,11 +220,12 @@ public class Group3 extends JFrame {
 						//This section run when user name does not exist
 						catch (SocketTimeoutException ex) {
 							multicastBroadcastSocket.setSoTimeout(0);
-													
+										
 							registeredName = tentativeName;		//Set user name
 							JOptionPane.showMessageDialog(null, registeredName + ", you have been successfully registered!");
 							lblStatus.setText(registeredName + ", you have been successfully registered!");
 							
+							//Enable and disable necessary buttons
 							btnRegister.setVisible(false);
 							txtUserName.setEditable(false);
 							taGroupFriendList.setEditable(true);
@@ -234,10 +239,11 @@ public class Group3 extends JFrame {
 								@Override
 								public void run() {
 									
+									//Keep running to receive message 
 									while (true) {
 										byte receiveBuf[] = new byte[1000];
 										DatagramPacket dgpReceived = new DatagramPacket(receiveBuf, receiveBuf.length);
-	
+										
 										try {
 											System.out.println("Listening to broadcast group...");
 											multicastBroadcastSocket.receive(dgpReceived);
@@ -254,9 +260,9 @@ public class Group3 extends JFrame {
 													byte[] receivedData = dgpReceived.getData();
 													int length = dgpReceived.getLength();
 													String receivedMessage = new String(receivedData, 0, length);
-	
+													
+													//Display dialog when chat group of the same name was created by other user
 													if (receivedMessage.equals("GroupExists|")) {
-														// Dialogue alert
 														JOptionPane.showMessageDialog(null, txtGroup.getText() + " already exists");
 														lblStatus.setText(txtGroup.getText() + " already exists");
 													}
@@ -286,6 +292,7 @@ public class Group3 extends JFrame {
 	
 												broadcastCreateGroup = false;
 											}
+											//Normal operation of reading received message 
 											else {
 												byte[] receivedData = dgpReceived.getData();
 												int length = dgpReceived.getLength();
@@ -311,16 +318,21 @@ public class Group3 extends JFrame {
 			}
 		});
 		
+		//Add friend button
 		btnAddFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String tentativeFriendName = txtFriend.getText().trim();
+				
+				//Check for empty input
 				if(tentativeFriendName.equals("")){
 					JOptionPane.showMessageDialog(null, "Please enter a name!");
 				}else{	
+					//Check if input friend name is already in the friend list
 					if (friendList.contains(tentativeFriendName)) {
 						JOptionPane.showMessageDialog(null, tentativeFriendName + " is already your friend.");
 						lblStatus.setText(tentativeFriendName + " is already your friend");
 					} 
+					//Check if input friend name is the user name
 					else if(tentativeFriendName.equals(registeredName))
 					{
 						JOptionPane.showMessageDialog(null, tentativeFriendName + " is your own name.");
@@ -328,8 +340,7 @@ public class Group3 extends JFrame {
 					}
 					else {
 						try {
-							
-							//Send friend Request
+							//Broadcast friend request over the network, only the specific friend will process the request
 							String friendName = "CheckFriendName|" + tentativeFriendName + "|" + registeredName;
 							byte[] sendBuf = friendName.getBytes();
 							DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
@@ -343,8 +354,10 @@ public class Group3 extends JFrame {
 			}
 		});
 		
+		//Remove friend button
 		btnDeleteFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				//Check for empty input
 				if(txtFriend.getText().trim().equals("")){					
 						JOptionPane.showMessageDialog(null, "Please enter a name!");
 				}else{						
@@ -355,6 +368,7 @@ public class Group3 extends JFrame {
 							JOptionPane.showMessageDialog(null, txtFriend.getText() + " has been removed");
 							lblStatus.setText(txtFriend.getText() + " has been removed from your friend list");
 							
+							//Enable and disable necessary buttons
 							if (friendList.isEmpty()) {
 								btnDeleteFriend.setEnabled(false);
 								btnAddGroupFriend.setEnabled(false);
@@ -370,25 +384,31 @@ public class Group3 extends JFrame {
 					}
 			}
 		});
-
+		
+		//Create new chat group button
 		btnAddGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String tentativeGroupName = txtGroup.getText().trim();
+				
+				//Check for empty input
 				if (tentativeGroupName.equals("")){
 					JOptionPane.showMessageDialog(null, "Please enter a name! ");
 				}else{
+					//Check whether the chat group is already exist in the user group list (To prevent duplication)
 					if (CheckGroupListExist(tentativeGroupName)) {
 						JOptionPane.showMessageDialog(null, tentativeGroupName + " group already exist");
 						lblStatus.setText(tentativeGroupName + " group already exist");
 					} else {
 						try {
-							//Broadcast group name to check any other group of similar name
+							//Broadcast group name to everyone in the network to check any user own the name of the tentative group name (To prevent duplication)
 							broadcastCreateGroup = true;
 							chatGroupThreadCreated = false;
+							
 							String checkGroupName = "CheckCreateGroupName|" + tentativeGroupName;
 							byte[] sendBuf = checkGroupName.getBytes();
 							DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
 							multicastBroadcastSocket.send(dgpSend);
+							
 							System.out.println("Check for chat group: " + checkGroupName);
 							lblStatus.setText("Creating new chat group. Please Wait...");
 						} catch (IOException ex) {
@@ -398,14 +418,15 @@ public class Group3 extends JFrame {
 				}
 			}
 		});
-
+		
+		//Add friend to chat group button
 		btnAddGroupFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String groupName = cobGroupList.getSelectedItem().toString();
 				String friendName = cobFriendList.getSelectedItem().toString();
 				
 				try {
-					//Add friend of a select group chat
+					//Add the specific friend of the selected chat group
 					String joinGroupRequest = friendName + "|JoinGroupRequest|" + registeredName + "|" + groupName + "|" + GetGroupIP(groupName);
 					byte[] sendBuf = joinGroupRequest.getBytes();
 					DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
@@ -417,6 +438,7 @@ public class Group3 extends JFrame {
 			}
 		});
 		
+		//Join chat group button, to start chat in the selected group
 		btnJoinGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String groupName = cobGroupList.getSelectedItem().toString();
@@ -459,6 +481,7 @@ public class Group3 extends JFrame {
 									ex.printStackTrace();
 								}
 								
+								//Run to receive message for group chat
 								while(true){
 									try{
 										multicastChatSocket.receive(dgpReceived);
@@ -478,7 +501,7 @@ public class Group3 extends JFrame {
 					else
 					{						
 						try{
-							//Broadcast to know who are current online
+							//Broadcast to know who are current online in this particular chat group
 							String whoIsThere = "WhoIsThere|"+registeredName;
 							
 							byte[] buf = whoIsThere.getBytes();
@@ -494,16 +517,15 @@ public class Group3 extends JFrame {
 				}
 			}
 		});
-
+		
+		//Private chat button
 		btnPrivateChat.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				
 				String friendName = cobFriendList.getSelectedItem().toString();
 				String chatIP = GeneratePrivateChatIP();
-					
 				
 					try {
-						//Send request to start a private chat with the select friend
+						//Send request to start a private chat with the selected friend
 						String privateChatRequest = friendName + "|PrivateChatRequest|" + registeredName + "|" + chatIP;
 						byte[] sendBuf = privateChatRequest.getBytes();
 						DatagramPacket dgpSend = new DatagramPacket(sendBuf, sendBuf.length, multicastBroadcastGroup, PORT);
@@ -516,7 +538,8 @@ public class Group3 extends JFrame {
 				
 			}
 		});
-
+		
+		//Leave the selected chat group button (Offline from chat group)
 		btnLeaveGroup.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				//Send a leaving message to other user in the chat group
@@ -536,6 +559,7 @@ public class Group3 extends JFrame {
 			}
 		});
 		
+		//Send message button
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try{
@@ -582,7 +606,8 @@ public class Group3 extends JFrame {
 		getContentPane().add(lblStatus);
 		
 	}
-
+	
+	//This function handle all action need to perform based on the message action header receive from the broadcast group
 	public void DoAction(String message) {
 		String action = message.substring(0, message.indexOf("|"));		//Retrieve action
 
@@ -663,7 +688,7 @@ public class Group3 extends JFrame {
 				}
 			}
 		} 
-		//Action when receive request reply
+		//Action when receive reply from previous request
 		else if(action.equals(registeredName))
 		{
 			String replyAction = message.substring(0, message.indexOf("|"));	//Retrieve reply action
@@ -672,6 +697,7 @@ public class Group3 extends JFrame {
 			//When friend request is accepted
 			if(replyAction.equals("FriendRequestAccepted"))
 			{
+				//Update and display friend name in the friend drop down list
 				friendList.add(message);
 				UpdateFriendList();
 				
@@ -710,24 +736,24 @@ public class Group3 extends JFrame {
 			//When a friend request to join a group chat
 			else if(replyAction.equals("JoinGroupRequest"))
 			{
-				//try {
-					int dialogButton = JOptionPane.YES_NO_OPTION;
-					String friendName = message.substring(0, message.indexOf("|"));
-					message = message.substring(message.indexOf("|") + 1, message.length());
-					String groupName = message.substring(0, message.indexOf("|"));
-					message = message.substring(message.indexOf("|") + 1, message.length());
-					String groupIP = message;
-					
-					int dialogResult = JOptionPane.showConfirmDialog(null, friendName + " would like you to join " + groupName + " chat group!", "Join Chat Group", dialogButton);
-					
-					if (dialogResult == 0) {
-						groupList.add(groupName + "|" + groupIP);
-						UpdateGroupList();	//Update group drop down list
-						btnJoinGroup.setEnabled(true);
-						btnLeaveGroup.setEnabled(true);
-						btnAddGroupFriend.setEnabled(true);
-						lblStatus.setText(groupName + " chat group has beed added to your group chat list!");
-					}
+				int dialogButton = JOptionPane.YES_NO_OPTION;
+				String friendName = message.substring(0, message.indexOf("|"));
+				message = message.substring(message.indexOf("|") + 1, message.length());
+				String groupName = message.substring(0, message.indexOf("|"));
+				message = message.substring(message.indexOf("|") + 1, message.length());
+				String groupIP = message;
+				
+				int dialogResult = JOptionPane.showConfirmDialog(null, friendName + " would like you to join " + groupName + " chat group!", "Join Chat Group", dialogButton);
+				
+				//Add chat group name into the group chat drop down list when user accepted the request
+				if (dialogResult == 0) {
+					groupList.add(groupName + "|" + groupIP);
+					UpdateGroupList();
+					btnJoinGroup.setEnabled(true);
+					btnLeaveGroup.setEnabled(true);
+					btnAddGroupFriend.setEnabled(true);
+					lblStatus.setText(groupName + " chat group has beed added to your group chat list!");
+				}
 			}
 			//Action for accepting a group chat
 			else if(replyAction.equals("PrivateChatRequest"))
@@ -739,9 +765,12 @@ public class Group3 extends JFrame {
 					
 					int dialogResult = JOptionPane.showConfirmDialog(null, friendName + " would like to have a private chat with you now. Do you acccept?", "Private Chat Request", dialogButton);
 					
+					//Start the private chat when user accepted the request
 					if (dialogResult == 0) {
+						//Send leave chat group message for previous chat
 						SendLeavingMessage();
 						
+						//Connect to new chat address
 						multicastChatGroup = InetAddress.getByName(message);
 						multicastChatSocket = new MulticastSocket(PORT);
 						multicastChatSocket.joinGroup(multicastChatGroup);
@@ -814,9 +843,10 @@ public class Group3 extends JFrame {
 				try {
 					JOptionPane.showMessageDialog(null, friendName + " has accepted your private chat request!");
 					
-					//Send leaving message to inform other user
+					//Send leaving message to inform other user of leaving the previous chat
 					SendLeavingMessage();
-
+					
+					//Connect to new chat address
 					multicastChatGroup = InetAddress.getByName(message);
 					multicastChatSocket = new MulticastSocket(PORT);
 					multicastChatSocket.joinGroup(multicastChatGroup);
@@ -871,7 +901,7 @@ public class Group3 extends JFrame {
 		}
 		//Action to respond group name already exist
 		else if (action.equals("CheckCreateGroupName")) {
-			//Check name against own created group list
+			//Check group name against own created group list
 			if (CheckGroupNameExist(message)) {
 				try {
 					String sendMessage = "GroupExists|";
@@ -975,7 +1005,7 @@ public class Group3 extends JFrame {
 		}
 	}
 	
-	//Function to update group chat friend list
+	//Function to update group chat friend list (Who is currently online list)
 	public void UpdateGroupFriendList()
 	{
 		taGroupFriendList.setText("");
@@ -1013,7 +1043,7 @@ public class Group3 extends JFrame {
 		{
 			action = message.substring(0, message.indexOf("|"));
 			
-			//Reply of who is online for the current chat group
+			//Received reply from who is online message for the current chat group
 			if(action.equals("WhoIsThereReply"))
 			{
 				message = message.substring(message.indexOf("|") + 1, message.length());
@@ -1036,6 +1066,7 @@ public class Group3 extends JFrame {
 				System.out.println(message + " has left group");
 			}
 			
+			//Update group friend list
 			UpdateGroupFriendList();
 		}
 		//Normal message
@@ -1057,7 +1088,7 @@ public class Group3 extends JFrame {
 	{
 		if(multicastChatGroup != null)
 		{
-			//Broadcast to other member that user is leaving the current group chat
+			//Broadcast to other member that this user is leaving the current group chat
 			try{
 				String msg = txtMessage.getText();
 				msg = "LeftGroup|" + registeredName;
